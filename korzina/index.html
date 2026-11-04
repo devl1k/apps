@@ -1,0 +1,1425 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Моя корзина</title>
+<meta name="theme-color" content="#3B4FD8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
+<style>
+/* Layout: one column (max 880px). Accent hero with the balance, month metrics, fixed bottom tab bar, forms in a bottom sheet with a pinned action bar. */
+:root{
+  --bg:#F1F3F8; --surface:#FFFFFF; --surface-2:#F5F6FA; --ink:#101827; --muted:#596378; --line:#DCE0EA;
+  --accent:#3B4FD8; --accent-ink:#FFFFFF; --accent-soft:#E6E9FC;
+  --income:#12805C; --income-soft:#DDF3EA; --expense:#C8402B; --expense-soft:#FBE4DF; --warn:#8A5A00; --warn-soft:#FFF1D1;
+  --p0:#3B4FD8; --p1:#B4540A; --p2:#0E7C86; --p3:#8B3FD1; --p4:#C2257A; --p5:#6B7A12;
+  --shadow:0 1px 2px rgba(16,24,39,.06),0 6px 20px rgba(16,24,39,.06);
+  --font-body:'Onest',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --font-display:'Unbounded','Onest',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0D111A; --surface:#151A26; --surface-2:#1B2130; --ink:#E9EDF6; --muted:#9AA4BA; --line:#262D3E;
+    --accent:#8FA0FF; --accent-ink:#0D111A; --accent-soft:#222A4D;
+    --income:#4CC58F; --income-soft:#143328; --expense:#FF8C75; --expense-soft:#3A1E19; --warn:#F2B84B; --warn-soft:#3A2D10;
+    --p0:#8FA0FF; --p1:#F0A25C; --p2:#4FC3CE; --p3:#C497F0; --p4:#F27DB5; --p5:#B9CB4A;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0D111A; --surface:#151A26; --surface-2:#1B2130; --ink:#E9EDF6; --muted:#9AA4BA; --line:#262D3E;
+  --accent:#8FA0FF; --accent-ink:#0D111A; --accent-soft:#222A4D;
+  --income:#4CC58F; --income-soft:#143328; --expense:#FF8C75; --expense-soft:#3A1E19; --warn:#F2B84B; --warn-soft:#3A2D10;
+  --p0:#8FA0FF; --p1:#F0A25C; --p2:#4FC3CE; --p3:#C497F0; --p4:#F27DB5; --p5:#B9CB4A;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.35);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 15px/1.45 var(--font-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{touch-action:manipulation}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3,p{margin:0}
+h2,h3{text-wrap:balance}
+.app{max-width:880px;margin:0 auto;padding-block:12px 150px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+.top .r{display:flex;gap:8px}
+.pbtn{appearance:none;display:inline-flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 12px;min-height:40px;max-width:100%;min-width:0;font:600 15px var(--font-body);cursor:pointer}
+.pbtn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.pbtn svg{width:16px;height:16px;flex:none;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:380px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
+.card h3{font:600 15px var(--font-body);margin-bottom:4px}
+.lbl{font-size:12px;color:var(--muted);letter-spacing:.02em}
+.s{font-size:13px;color:var(--muted)}
+.num{font-variant-numeric:tabular-nums}
+.grow{flex:1}
+
+.hero{background:var(--accent);color:var(--accent-ink);border-radius:20px;padding:20px 18px}
+.hero .lbl{color:inherit;opacity:.8}
+.hero-num{font:600 clamp(28px,8vw,40px)/1.15 var(--font-display);letter-spacing:-.02em;margin:6px 0 8px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.hero-sub{font-size:14px;opacity:.92}
+.hero-sub b{font-weight:700}
+.hero-act{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.hero-act .btn{background:rgba(0,0,0,.14);color:inherit;border-color:transparent}
+.reserve{background:var(--warn-soft);border:1px solid var(--warn);border-radius:16px;padding:16px;color:var(--ink)}
+.reserve .lbl{color:var(--warn);font-weight:600}
+.reserve-num{font:600 28px/1.2 var(--font-display);margin:4px 0;color:var(--warn);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+.mswitch{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.mswitch .mt{font:600 15px var(--font-display);text-align:center;flex:1}
+.icon-btn{appearance:none;background:var(--surface);border:1px solid var(--line);width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none}
+.icon-btn[disabled]{opacity:.4;cursor:default}
+.icon-btn.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.icon-btn svg{width:20px;height:20px}
+svg.ic{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:14px;padding:10px 14px;border-radius:10px;cursor:pointer;min-height:42px}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+.btn.danger{color:var(--expense)}
+.btn.small{padding:6px 10px;min-height:34px;font-size:13px}
+.btn[disabled]{opacity:.5;cursor:default}
+.link{appearance:none;background:none;border:0;padding:0;font-weight:600;color:var(--accent);cursor:pointer;text-align:left}
+
+.metric .v{font:600 20px/1.25 var(--font-display);font-variant-numeric:tabular-nums;margin:4px 0 2px;overflow-wrap:anywhere}
+.metric .v.in{color:var(--income)} .metric .v.out{color:var(--expense)}
+.bar{display:flex;height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:8px}
+.bar .f{background:var(--c)}
+.bar .p{background:repeating-linear-gradient(135deg,var(--c) 0 3px,transparent 3px 6px);box-shadow:inset 0 0 0 1px var(--c)}
+.bar.exp{--c:var(--expense)} .bar.inc{--c:var(--income)} .bar.acc{--c:var(--accent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted);margin-top:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.legend .f{background:var(--c)} .legend .p{background:repeating-linear-gradient(135deg,var(--c) 0 2px,transparent 2px 4px);box-shadow:inset 0 0 0 1px var(--c)}
+
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:6px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.rowmain{display:flex;flex:1;min-width:0;align-items:center;gap:12px;background:none;border:0;padding:4px 0;text-align:left;cursor:pointer;min-height:48px}
+.rowmain .tx{flex:1;min-width:0}
+.rowmain .t{font-weight:600;overflow-wrap:anywhere}
+.amt-c{display:flex;flex-direction:column;align-items:flex-end;white-space:nowrap}
+.amt-c .sub{font-size:11px;color:var(--muted);font-weight:500}
+.a{font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.a.in{color:var(--income)} .a.out{color:var(--expense)}
+.dot{width:10px;height:10px;border-radius:50%;flex:none;background:var(--c);border:2px solid var(--c)}
+.dot.hollow{background:transparent}
+.dot.in{--c:var(--income)} .dot.out{--c:var(--expense)}
+.chip{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid transparent;margin-left:6px;vertical-align:1px;white-space:nowrap}
+.chip.fact{background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+.chip.plan{background:var(--accent-soft);color:var(--accent)}
+.chip.late{background:var(--expense-soft);color:var(--expense)}
+.chip.ok{background:var(--income-soft);color:var(--income)}
+.chip.rep{background:var(--surface-2);color:var(--muted);border-color:var(--line)}
+.who{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--surface-2);border:1px solid var(--line);margin-left:6px;vertical-align:1px;white-space:nowrap}
+.who::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c,var(--muted))}
+.empty{color:var(--muted);font-size:14px;padding:8px 0}
+.banner{background:var(--accent-soft);color:var(--ink);border-radius:14px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.note{background:var(--surface-2);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--muted)}
+
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px;overflow-x:auto}
+.seg button{flex:1;appearance:none;border:0;background:transparent;padding:8px 10px;border-radius:9px;font-weight:600;font-size:14px;color:var(--muted);cursor:pointer;min-height:38px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.seg button.on.exp{color:var(--expense)} .seg button.on.inc{color:var(--income)}
+.seg button .pd{width:8px;height:8px;border-radius:50%;background:var(--c)}
+
+.cal{display:flex;flex-direction:column;gap:4px}
+.cal .hd,.cal .wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.cal .wk{position:relative}
+.cal .wk .c{min-height:calc(54px + var(--ln,0)*21px)}
+.wkb{position:absolute;left:0;right:0;top:46px;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));column-gap:4px;grid-auto-rows:18px;row-gap:3px;pointer-events:none}
+.rb{pointer-events:auto;appearance:none;border:0;padding:0;margin:0;height:18px;position:relative;display:grid;grid-template-columns:repeat(var(--k,1),minmax(0,1fr));column-gap:4px;background:none;cursor:pointer;min-width:0;color:var(--ink);font:600 11px var(--font-body);text-align:left}
+.rb .sg{margin:0 4px;background:color-mix(in srgb,var(--c) 28%,var(--surface));border-radius:4px}
+.rb .sg.s{border-radius:9px 4px 4px 9px} .rb .sg.e{border-radius:4px 9px 9px 4px} .rb .sg.s.e{border-radius:9px}
+.rb.in{--c:var(--income)} .rb.out{--c:var(--expense)}
+.rb .lb{position:absolute;left:12px;right:12px;top:0;line-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.rb .lb.ml{left:25px} .rb .lb.mr{right:25px}
+.rb .mk{position:absolute;top:5px;width:8px;height:8px;border-radius:50%;background:var(--c);pointer-events:none}
+.rb .mk.l{left:12px} .rb .mk.r{right:12px}
+.cal .h{font-size:11px;color:var(--muted);text-align:center;padding-bottom:2px}
+.cal .c{position:relative;appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:10px;min-height:50px;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:3px;font-size:13px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums;color:var(--ink)}
+.cal .c .dn{line-height:20px}
+.cal button.c:hover{border-color:var(--muted)}
+.cal .c.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cal .c.sel{background:var(--accent-soft)}
+.cal .c.none{color:var(--muted);cursor:default;font-weight:400;background:transparent;border-color:var(--line)}
+.cal .c.win{background:var(--surface-2);cursor:default}
+.cal .c.today{outline:2px solid var(--accent);outline-offset:-1px}
+.cal .gap{visibility:hidden}
+.cal .ds{display:flex;gap:3px;min-height:7px;align-items:center}
+.d{width:7px;height:7px;border-radius:50%;background:var(--c);border:1.5px solid var(--c)}
+.d.hollow{background:transparent}
+.d.in{--c:var(--income)} .d.out{--c:var(--expense)}
+.lgbar{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;margin-right:5px;border:1px solid color-mix(in srgb,var(--c) 45%,var(--line));background:color-mix(in srgb,var(--c) 22%,var(--surface))}
+.lgbar.in{--c:var(--income)} .lgbar.out{--c:var(--expense)}
+.legend i.lgbar{width:14px;height:14px;border-radius:4px;margin-right:5px;vertical-align:-2px}
+.legend i.lgpt{width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:0}
+.sync-st{font-size:13px;padding:8px 10px;border-radius:10px;background:var(--surface-2)}
+.sync-st.bad{color:var(--expense)}
+.sync-box{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px}
+.sync-box textarea{min-height:64px;resize:vertical;font:12px/1.3 ui-monospace,monospace}
+.lgpt{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--muted);vertical-align:0;margin-right:5px}
+.daylist{display:flex;flex-direction:column;gap:8px}
+.daygrp{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:2px 14px 4px;transition:background .6s,border-color .6s;scroll-margin-top:12px}
+.daygrp.hl{background:var(--accent-soft);border-color:var(--accent)}
+.daygrp.past{opacity:.78}
+.dayhead{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:10px 0 2px}
+.dayhead .dd{font-weight:700;font-size:16px}
+.dayhead .wd{color:var(--muted);font-weight:500;margin-left:8px;font-size:13px}
+.drow{display:flex;align-items:center;gap:12px;padding:8px 0;border-top:1px solid var(--line)}
+.dayhead+.drow{border-top:0}
+.chk{appearance:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--c);background:transparent;flex:none;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0;color:var(--surface)}
+.chk.in{--c:var(--income)} .chk.out{--c:var(--expense)}
+.chk.on{background:var(--c)}
+.chk svg{width:16px;height:16px;stroke-width:3}
+.dmain{flex:1;min-width:0;display:flex;align-items:center;gap:10px;background:none;border:0;padding:0;text-align:left;cursor:pointer;min-height:44px}
+.dmain .tx{flex:1;min-width:0}
+.dmain .t{font-weight:600;overflow-wrap:anywhere;display:block}
+.dmain .s2{display:block;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.drow.done .t{color:var(--muted)}
+.drow.done .a{opacity:.65}
+.wn::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c,var(--muted));margin-right:4px}
+.fold{padding:12px 16px}
+.foldh{appearance:none;background:none;border:0;padding:0;width:100%;display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;min-height:32px}
+.foldh .ft{font:600 15px var(--font-body);flex:1;min-width:0}
+.foldh .fh{font-size:12px;color:var(--muted);text-align:right;min-width:0}
+.chev{width:18px;height:18px;transition:transform .2s;color:var(--muted);flex:none}
+.chev.up{transform:rotate(180deg)}
+.foldb{margin-top:10px}
+.dayhead .r{text-align:right;display:flex;flex-direction:column;align-items:flex-end}
+.dayhead .r b{font-variant-numeric:tabular-nums;font-size:14px}
+.dayhead .r .lbl{font-variant-numeric:tabular-nums}
+
+.rec.off{opacity:.65}
+.rec-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.rec-bot{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.rec-bot .btns{display:flex;gap:6px}
+.pcard{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-top:1px solid var(--line)}
+.pcard:first-of-type{border-top:0;padding-top:4px}
+.pgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+.pgrid b{display:block;font-variant-numeric:tabular-nums}
+
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;min-width:680px;font-variant-numeric:tabular-nums}
+th{font-size:12px;font-weight:600;color:var(--muted);text-align:right;padding:8px;white-space:nowrap}
+td{padding:10px 8px;text-align:right;border-top:1px solid var(--line);white-space:nowrap;vertical-align:top}
+th:first-child,td:first-child{text-align:left}
+td .sub{display:block;font-size:11px;color:var(--muted)}
+tr.cur td{background:var(--accent-soft)}
+.chartwrap{overflow-x:auto}
+.chartwrap svg{display:block;min-width:600px;width:100%;height:auto}
+svg .gl{stroke:var(--line);stroke-width:1}
+svg .tx{fill:var(--muted);font-size:11px;font-family:var(--font-body)}
+svg .now{fill:var(--accent-soft)}
+svg .b.in{fill:var(--income)} svg .b.ex{fill:var(--expense)}
+svg .b.p.in{fill:url(#hi);stroke:var(--income);stroke-width:1}
+svg .b.p.ex{fill:url(#he);stroke:var(--expense);stroke-width:1}
+
+.form{display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.field>span{font-size:12px;color:var(--muted)}
+input[type=text],input[type=date],input[type=password],input:not([type]),select,textarea{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-height:44px;width:100%;min-width:0;font-size:16px}
+input[type=date]{-webkit-appearance:none;appearance:none;display:block}
+textarea{min-height:110px;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;resize:vertical}
+.field.big input{font:600 26px var(--font-display);padding:12px 14px;padding-right:48px}
+.amt{position:relative}
+.amt i{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-style:normal;color:var(--muted);font-size:18px;pointer-events:none}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:420px){.row2{grid-template-columns:minmax(0,1fr)}}
+.inl{display:flex;gap:8px}
+.inl input{flex:1}
+.hint{font-size:12px;color:var(--muted);min-height:0}
+.hint:empty{display:none}
+.check{display:flex;gap:10px;align-items:center;cursor:pointer}
+.check input{width:22px;height:22px;accent-color:var(--accent);flex:none}
+.err{color:var(--expense);font-size:13px}
+.err:empty{display:none}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.catchip{display:inline-flex;align-items:center;gap:4px;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 4px 3px 10px;font-size:13px}
+.catchip button{appearance:none;border:0;background:none;color:var(--muted);cursor:pointer;width:26px;height:26px;border-radius:50%;line-height:1;font-size:16px}
+.catadd{display:flex;gap:8px}
+.set-sec{display:flex;flex-direction:column;gap:12px}
+.pers{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr) auto;gap:8px;align-items:end}
+@media (max-width:520px){.pers{grid-template-columns:auto minmax(0,1fr) auto}.pers .st{grid-column:2/4;order:5}}
+.sw{width:14px;height:14px;border-radius:50%;background:var(--c);margin-bottom:15px;border:0;padding:0;cursor:pointer;box-shadow:0 0 0 3px var(--surface-2)}
+.keyrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.keyrow:first-of-type{border-top:0}
+kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface-2);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:3px 8px;white-space:nowrap}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:18px;text-align:center;color:var(--muted);cursor:pointer;background:var(--surface-2)}
+.drop:hover,.drop.over{border-color:var(--accent);color:var(--ink)}
+.dropall{position:fixed;inset:0;z-index:80;background:rgba(10,14,24,.7);color:#fff;display:flex;align-items:center;justify-content:center;font:600 20px var(--font-display);text-align:center;padding:24px}
+.prog{margin-top:10px}
+.dh{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);z-index:20;
+  padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.nav-in{max-width:880px;margin:0 auto;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px}
+.nav button{appearance:none;border:0;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 0;border-radius:10px;font-size:10.5px;font-weight:600;cursor:pointer;min-height:52px}
+.nav button svg{width:22px;height:22px}
+.nav button.on{color:var(--accent);background:var(--accent-soft)}
+.fab{position:fixed;z-index:21;right:max(16px,calc((100vw - 880px)/2 + 16px));bottom:calc(80px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:18px;border:0;background:var(--accent);color:var(--accent-ink);box-shadow:0 6px 18px rgba(20,30,90,.35);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fab svg{width:26px;height:26px;stroke-width:2.2}
+.modal{position:fixed;inset:0;z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.backdrop{position:absolute;inset:0;background:rgba(10,14,24,.55)}
+.sheet{position:relative;width:100%;max-width:520px;max-height:92vh;max-height:92dvh;display:flex;flex-direction:column;background:var(--surface);border-radius:20px 20px 0 0;overscroll-behavior:contain}
+.sheet-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 16px 10px}
+.sheet-h h2{font:600 18px var(--font-display);min-width:0;overflow-wrap:anywhere}
+.sheet-b{overflow-y:auto;padding:4px 16px 14px;flex:1;min-height:0;-webkit-overflow-scrolling:touch}
+.sheet-f{padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--surface);border-radius:0}
+.sheet-f:empty{display:none}
+@media (min-width:640px){.modal{align-items:center}.sheet{border-radius:20px}}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:8px 8px 8px 16px;border-radius:12px;font-size:14px;z-index:60;max-width:calc(100vw - 32px);display:flex;gap:10px;align-items:center}
+.toast button{appearance:none;border:0;background:rgba(127,127,127,.25);color:inherit;font-weight:700;border-radius:8px;padding:6px 12px;cursor:pointer;min-height:34px}
+.onb{max-width:520px;margin:4vh auto 0}
+.onb h1{font:600 26px/1.2 var(--font-display);letter-spacing:-.02em;margin:8px 0 10px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+.inp{width:100%;min-height:44px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.inp:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.qadd{display:flex;gap:8px}
+.qadd .inp{flex:1;min-width:0}
+.chipbar{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chipbar::-webkit-scrollbar{display:none}
+.fchip{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;flex:none;min-height:34px}
+.fchip.on{background:var(--accent-soft);color:var(--accent);border-color:var(--accent)}
+.fchip.act{color:var(--ink)}
+.tg{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:color-mix(in srgb,var(--c,var(--muted)) 18%,var(--surface));color:var(--ink);margin-left:6px;white-space:nowrap;vertical-align:1px}
+.tg::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c,var(--muted))}
+.chk.ok{--c:var(--income)} .chk.sel{--c:var(--accent)}
+.row.done .t{color:var(--muted);text-decoration:line-through}
+.row.done .a{opacity:.6}
+.low{color:var(--expense);font-weight:600}
+.okc{color:var(--income);font-weight:600}
+.grp{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:14px 0 2px}
+.grp:first-child{margin-top:0}
+.grp b{font-size:14px}
+.meter{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:8px}
+.meter i{display:block;height:100%;background:var(--c,var(--accent));border-radius:4px}
+.bulk{position:sticky;top:6px;z-index:6;box-shadow:var(--shadow);background:var(--surface)}
+.pk{display:flex;flex-direction:column;gap:8px}
+.pk .hd{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.pk .names{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.tier{display:grid;grid-template-columns:46px minmax(0,1fr);gap:8px;margin-bottom:8px}
+.tier .lb{display:flex;align-items:center;justify-content:center;border-radius:12px;font:700 22px var(--font-display);color:#fff;background:var(--c)}
+.tier .it{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);min-height:46px;align-items:center}
+.tier .it span{background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+.tier .it span em{font-style:normal;color:var(--muted);font-weight:500;margin-left:4px}
+.barrow{display:grid;grid-template-columns:110px minmax(0,1fr) auto;gap:10px;align-items:center;padding:4px 0;font-size:13px}
+.barrow .meter{margin:0}
+.nm2{font-size:12px;color:var(--muted)}
+.prow{display:grid;grid-template-columns:minmax(0,1fr) 120px;gap:10px;align-items:center}
+.stp{display:flex;align-items:center;gap:8px}
+.stp .inp{text-align:center;max-width:90px}
+.hint{background:var(--warn-soft);color:var(--ink);border-radius:12px;padding:10px 12px;font-size:13px}
+
+.chart{width:100%;height:auto;display:block;margin-top:6px}
+.legend2{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:6px}
+.legend2 i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.barrow2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) auto;gap:10px;align-items:center;padding:7px 0;border-top:1px solid var(--line)}
+.barrow2:first-of-type{border-top:0}.barrow2 .bl{display:flex;flex-direction:column;min-width:0}.barrow2 .bl b{overflow-wrap:anywhere;font-weight:600}
+.row.got .t{text-decoration:line-through;opacity:.65}
+.finish .btn[disabled]{opacity:.5}
+</style>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#4FD1A0">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="pbtn" style="cursor:default"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/></svg><span>Моя корзина</span></div>
+    <div class="r">
+      <button class="icon-btn" id="b-undo" data-act="undo" type="button" aria-label="Отменить действие" title="Отменить действие" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+      <button class="icon-btn" id="b-names" data-act="names-toggle" type="button" aria-label="Смешные названия" title="Смешные названия"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/></svg></button>
+      <button class="icon-btn" id="b-prices" data-act="price-toggle" type="button" aria-label="Показывать цены" title="Показывать цены"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></button>
+    </div>
+  </header>
+  <main id="main"></main>
+</div>
+<nav class="nav" id="nav"><div class="nav-in" style="grid-template-columns:repeat(6,minmax(0,1fr))"><button data-act="tab" data-t="list" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/></svg>Список</button><button data-act="tab" data-t="items" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>Товары</button><button data-act="tab" data-t="packs" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M19 15v6l-3-2z"/></svg>Паки</button><button data-act="tab" data-t="spend" type="button"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg>Траты</button><button data-act="tab" data-t="tier" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6M2 20h20"/></svg>Статистика</button><button data-act="tab" data-t="settings" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>Ещё</button></div></nav>
+<button class="fab" id="fab" data-act="add" type="button" aria-label="Новый товар"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+<div class="modal" id="modal" hidden><div class="backdrop" data-act="close"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="sheet-h" id="sheet-h"></div><div class="sheet-b" id="sheet-b"></div><div class="sheet-f" id="sheet-f"></div></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="dropall" id="dropall" hidden>Отпустите файл, чтобы импортировать</div>
+<input type="file" id="imp-file" accept=".json,application/json" hidden>
+<script>
+(function(){
+'use strict';
+/* ---------- helpers ---------- */
+const $=(s,r)=>(r||document).querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=(y,m,d)=>y+'-'+pad(m)+'-'+pad(d);
+const todayISO=()=>{const d=new Date();return iso(d.getFullYear(),d.getMonth()+1,d.getDate())};
+const dim=(y,m)=>new Date(y,m,0).getDate();
+const ym=s=>s.slice(0,7);
+const addM=(k,n)=>{const p=k.split('-').map(Number);const t=p[0]*12+p[1]-1+n;return Math.floor(t/12)+'-'+pad(t%12+1)};
+const addD=(s,n)=>{const p=s.split('-').map(Number);const t=new Date(p[0],p[1]-1,p[2]+n);return iso(t.getFullYear(),t.getMonth()+1,t.getDate())};
+const MN=['январь','февраль','март','апрель','май','июнь','июль','август','сентябрь','октябрь','ноябрь','декабрь'];
+const MG=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+const WD=['вс','пн','вт','ср','чт','пт','сб'];
+const monthTitle=k=>{const p=k.split('-').map(Number);const n=MN[p[1]-1];return n.charAt(0).toUpperCase()+n.slice(1)+' '+p[0]};
+const dowOf=s=>{const p=s.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]).getDay()};
+const fmtShort=s=>{const p=s.split('-').map(Number);return p[2]+' '+MG[p[1]-1]};
+const fmtLong=s=>fmtShort(s)+', '+WD[dowOf(s)];
+const fmtRange=(a,b)=>{if(!b||b<=a) return fmtShort(a);if(ym(a)===ym(b)) return Number(a.slice(8))+'–'+Number(b.slice(8))+' '+MG[Number(a.slice(5,7))-1];return fmtShort(a)+' – '+fmtShort(b)};
+const nf0=new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0});
+const nf2=new Intl.NumberFormat('ru-RU',{minimumFractionDigits:2,maximumFractionDigits:2});
+const cur=()=>state.settings.currency||'₽';
+const r2=v=>Math.round((Number(v)||0)*100)/100;
+function nfm(v){v=Math.abs(r2(v));return (Number.isInteger(v)?nf0:nf2).format(v)}
+function money(v,sign){v=r2(v);return (v<0?'−':(sign&&v>0?'+':''))+nfm(v)+' '+cur()}
+const rangeTxt=(lo,hi)=>nfm(lo)+'–'+nfm(hi)+' '+cur();
+const parseAmount=s=>{const n=Number(String(s).replace(/[\s ]/g,'').replace(',','.'));return isFinite(n)&&String(s).trim()!==''?n:NaN};
+function parseRange(s){
+  s=String(s==null?'':s).trim(); if(!s) return null;
+  const m=s.match(/^(.+?)\s*(?:[-–—−]|\.\.\.?|…|до)\s*(.+)$/i);
+  if(m){let a=parseAmount(m[1]),b=parseAmount(m[2]);if(isFinite(a)&&isFinite(b)){if(a>b){const t=a;a=b;b=t}return {lo:a,hi:b}}return null}
+  const a=parseAmount(s);return isFinite(a)?{lo:a,hi:a}:null;
+}
+const rangeInput=(lo,hi)=>{lo=Number(lo)||0;hi=Number(hi);return lo?(hi>lo?lo+'–'+hi:String(lo)):''};
+const uid=()=>Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);
+const clone=o=>JSON.parse(JSON.stringify(o));
+const ICONS={left:'<path d="M15 18l-6-6 6-6"/>',right:'<path d="M9 18l6-6-6-6"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>'};
+const ic=n=>'<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+ICONS[n]+'</svg>';
+async function pool(items,fn,n){const q=items.slice();const w=Array.from({length:Math.min(n||6,q.length)},async()=>{while(q.length){await fn(q.shift())}});await Promise.all(w)}
+
+
+let fs=null;
+/* ---------- toast & sheet ---------- */
+let toastT=0;
+function toast(msg,o){
+  const t=$('#toast');
+  t.innerHTML='<span>'+esc(msg)+'</span>'+(o&&o.undo?'<button type="button" data-act="undo">Отменить</button>':'')+(o&&o.redo?'<button type="button" data-act="redo">Вернуть</button>':'');
+  t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},(o&&(o.undo||o.redo))?7000:3200);
+}
+function openSheet(title,body,bar,focusId){
+  $('#sheet-h').innerHTML='<h2 id="sheet-title">'+title+'</h2><button class="icon-btn" type="button" data-act="close" aria-label="Закрыть">'+ic('x')+'</button>';
+  $('#sheet-b').innerHTML=body;$('#sheet-f').innerHTML=bar||'';$('#sheet-b').scrollTop=0;
+  $('#modal').hidden=false;
+  const f=focusId&&$('#'+focusId);if(f&&!matchMedia('(pointer:coarse)').matches) setTimeout(()=>f.focus(),30);
+}
+function closeSheet(){$('#modal').hidden=true;$('#sheet-b').innerHTML='';$('#sheet-f').innerHTML='';fs=null}
+function twoStep(el,label,fn){
+  if(el.dataset.arm){fn();return}
+  el.dataset.arm='1';const old=el.textContent;el.textContent=label;
+  setTimeout(()=>{if(el.isConnected){delete el.dataset.arm;el.textContent=old}},3500);
+}
+async function copyText(t,okMsg){
+  let p;try{p=navigator.clipboard.writeText(t)}catch(e){p=Promise.reject(e)}
+  p.then(()=>toast(okMsg||'Скопировано'),()=>toast('Не удалось скопировать. Выделите текст вручную.'));
+}
+
+const keyOf=a=>prefs.keys[a.id]||a.def;
+function comboFromEvent(e){
+  if(/^(Control|Shift|Alt|Meta)(Left|Right)$/.test(e.code)||!e.code) return '';
+  const code=e.code==='NumpadEnter'?'Enter':e.code;
+  return ((e.ctrlKey||e.metaKey)?'Ctrl+':'')+(e.altKey?'Alt+':'')+(e.shiftKey?'Shift+':'')+code;
+}
+function comboLabel(c){
+  return c.split('+').map(p=>{
+    if(/^Key[A-Z]$/.test(p)) return p.slice(3);
+    if(/^Digit\d$/.test(p)) return p.slice(5);
+    const m={ArrowLeft:'←',ArrowRight:'→',ArrowUp:'↑',ArrowDown:'↓',Slash:'/',Space:'Пробел',Escape:'Esc',Comma:',',Period:'.',BracketLeft:'[',BracketRight:']'};
+    return m[p]||p;
+  }).join(' + ');
+}
+
+/* ---------- prefs (per device) ---------- */
+const PK='moya-korzina-ui',DK='moya-korzina-v1';
+const prefs={prices:true,keys:{},open:{}};
+function loadPrefs(){try{const j=JSON.parse(localStorage.getItem(PK)||'{}');prefs.prices=j.prices!==false;prefs.keys=j.keys&&typeof j.keys==='object'?j.keys:{};prefs.open=j.open&&typeof j.open==='object'?j.open:{}}catch(e){}}
+function savePrefs(){try{localStorage.setItem(PK,JSON.stringify(prefs))}catch(e){}}
+Object.assign(ICONS,{
+  basket:'<path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/>',
+  tag:'<path d="M20 12l-8 8-9-9V3h8z"/><circle cx="7.5" cy="7.5" r="1.2"/>',
+  box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+  rank:'<path d="M5 20V11M12 20V4M19 20v-6M2 20h20"/>',
+  set:'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>',check:'<path d="M5 12l5 5 9-10"/>',
+  undo:'<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
+  coin:'<circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/>',
+  face:'<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/>'
+});
+/* ---------- state ---------- */
+const DEF_TAGS=[{id:'daily',name:'Ежедневная',c:2,grp:'ess'},{id:'planned',name:'Запланированная',c:0,grp:'ess'},{id:'must',name:'Обязательная',c:1,grp:'ess'},{id:'unplanned',name:'Внеплановая',c:4,grp:'wish'},{id:'wish',name:'Хотелка',c:3,grp:'wish'}];
+function defSettings(){return {manualEss:0,manualWish:0,manualFirst:false,budgetManual:false,currency:'₽',nameMode:'normal',cats:['Продукты','Бытовая химия','Одежда','Сигареты','Другое'],tags:clone(DEF_TAGS),budget:0,useFin:true,toFin:true}}
+function normSettings(d){const b=defSettings(),s=Object.assign(b,d||{});if(!Array.isArray(s.cats)) s.cats=b.cats;if(!Array.isArray(s.tags)||!s.tags.length) s.tags=b.tags;return s}
+const KINDS=['items','packs','stores','list','buys'];
+const state={settings:defSettings(),items:new Map(),packs:new Map(),stores:new Map(),list:new Map(),buys:new Map(),bridge:null};
+const ui={tab:'list',q:'',cat:'',tag:'',store:'',only:'',sort:'name',limit:100,selMode:false,sel:new Set(),group:'store',capturing:null,period:'all',metric:'cnt'};
+const MODES=[['normal','Обычные'],['f0','Смешные 1'],['f1','Смешные 2'],['f2','Смешные 3'],['rand','Случайные']];
+const UNITS=['шт','кг','г','л','мл','уп'];
+const TABS=['list','items','packs','spend','tier','settings'];
+/* ---------- storage ---------- */
+let st=0;
+function flushLocal(){
+  clearTimeout(st);st=0;
+  try{localStorage.setItem(DK,JSON.stringify({v:1,settings:state.settings,items:[...state.items.values()],packs:[...state.packs.values()],stores:[...state.stores.values()],list:[...state.list.values()],buys:[...state.buys.values()],bridge:state.bridge}))}catch(e){}
+  if(Sync.cfg) syncScan();
+}
+const persistLocal=()=>{clearTimeout(st);st=setTimeout(flushLocal,120)};
+window.addEventListener('pagehide',()=>{if(st) flushLocal()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&st) flushLocal()});
+function loadLocal(){
+  try{
+    const j=JSON.parse(localStorage.getItem(DK)||'null');
+    if(j){state.settings=normSettings(j.settings);KINDS.forEach(k=>{state[k]=new Map((j[k]||[]).filter(o=>o&&o.id).map(o=>[o.id,o]))});state.bridge=j.bridge||null}
+  }catch(e){}
+}
+function rawPut(kind,o){state[kind].set(o.id,o);persistLocal()}
+function rawDel(kind,id){state[kind].delete(id);persistLocal()}
+/* ---------- undo / redo ---------- */
+const hist={undo:[],redo:[]};let tx=null;
+function track(kind,id,prev,next){if(tx) tx.push({kind,id,prev:prev?clone(prev):null,next:next?clone(next):null})}
+function commit(label,fn,o){
+  tx=[];let t;
+  try{fn()}finally{t=tx;tx=null}
+  if(t.length){hist.undo.push({label,t});if(hist.undo.length>100) hist.undo.shift();hist.redo=[];if(!(o&&o.quiet)) toast(label,{undo:true})}
+  renderHeader();schedule();
+}
+const Persist={
+  put(kind,o){track(kind,o.id,state[kind].get(o.id),o);rawPut(kind,o)},
+  del(kind,id){const p=state[kind].get(id);if(!p) return;track(kind,id,p,null);rawDel(kind,id)},
+  settings(mut){const prev=clone(state.settings);mut(state.settings);track('settings','s',prev,state.settings);persistLocal()}
+};
+function restore(kind,id,val){if(kind==='settings'){if(val){state.settings=normSettings(clone(val));persistLocal()}}else if(val==null) rawDel(kind,id);else rawPut(kind,clone(val))}
+function undo(){const e=hist.undo.pop();if(!e){toast('Нечего отменять');return}[...e.t].reverse().forEach(c=>restore(c.kind,c.id,c.prev));hist.redo.push(e);toast('Отменено: '+e.label,{redo:true});renderHeader();render(true)}
+function redo(){const e=hist.redo.pop();if(!e){toast('Нечего возвращать');return}e.t.forEach(c=>restore(c.kind,c.id,c.next));hist.undo.push(e);toast('Возвращено: '+e.label);renderHeader();render(true)}
+/* ---------- domain ---------- */
+const norm=s=>String(s||'').toLowerCase().replace(/ё/g,'е').trim();
+const hashStr=s=>{let h=0;for(let i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0;return h};
+function dn(it){
+  const m=state.settings.nameMode;if(m==='normal') return it.name;
+  const v=(it.funny||[]).filter(Boolean);if(!v.length) return it.name;
+  if(m==='rand') return v[hashStr(it.id)%v.length];
+  return v[Math.min(Number(m.slice(1))||0,v.length-1)];
+}
+const funnyOn=()=>state.settings.nameMode!=='normal';
+const hay=it=>norm([it.name].concat(it.funny||[],[it.cat||'']).join(' '));
+const storeName=id=>{const s=state.stores.get(id);return s?s.name:''};
+const need=it=>Math.max(0,(Number(it.min)||0)-(Number(it.have)||0));
+const tagOf=it=>state.settings.tags.find(t=>t.id===it.tag);
+const tagChip=it=>{const t=tagOf(it);return t?'<span class="tg" style="--c:var(--p'+t.c+')">'+esc(t.name)+'</span>':''};
+function priceAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0) return p;return Number(it.price)>0?Number(it.price):0}
+function cheapest(it){let b=null;for(const sid in (it.prices||{})){if(!state.stores.has(sid)) continue;const p=Number(it.prices[sid]);if(p>0&&(!b||p<b.p)) b={sid,p}}return b}
+const mainStore=it=>(it.store&&state.stores.has(it.store))?it.store:((cheapest(it)||{}).sid||'');
+const basePrice=it=>priceAt(it,mainStore(it));
+const entryStore=(e,it)=>(e.store&&state.stores.has(e.store))?e.store:mainStore(it);
+const entryUnit=(e,it)=>priceAt(it,entryStore(e,it));
+const entries=()=>[...state.list.values()].filter(e=>state.items.has(e.itemId));
+const inList=id=>entries().find(e=>e.itemId===id&&!e.done);
+function nameKey(n){return norm(n)}
+function findItemByName(n){const k=nameKey(n);if(!k) return null;for(const it of state.items.values()){if(nameKey(it.name)===k||(it.funny||[]).some(f=>nameKey(f)===k)) return it}return null}
+const ddays=(a,b)=>Math.round((Date.UTC(+b.slice(0,4),+b.slice(5,7)-1,+b.slice(8,10))-Date.UTC(+a.slice(0,4),+a.slice(5,7)-1,+a.slice(8,10)))/864e5);
+function budget(){
+  const s=state.settings,b=state.bridge;
+  if(s.budgetManual&&Number(s.budget)>0) return {v:Number(s.budget),src:'моя сумма'};
+  if(s.useFin&&b&&isFinite(b.free)) return {v:Math.max(0,Number(b.free)),raw:Number(b.free),src:'касса',u:b.u,eday:Number(b.eday)||0,next:b.next||'',stale:Date.now()-(b.u||0)>3*864e5};
+  if(Number(s.budget)>0) return {v:Number(s.budget),src:'вручную'};
+  return null;
+}
+function budgetLine(total){
+  const b=budget();if(!b) return '<div class="s" style="margin-top:6px">Чтобы видеть, хватает ли денег, впишите свободную сумму в «Ещё» или подключите «Мою кассу».</div>';
+  const left=b.v-total,ok=left>=0;
+  return '<div class="s" style="margin-top:6px">Свободно ('+b.src+'): <b class="num">'+money(b.v)+'</b> · '+(ok?'<span class="okc">хватает, останется '+money(left)+'</span>':'<span class="low">не хватает '+money(-left)+'</span>')+'</div>'
+    +'<div class="meter" style="--c:'+(ok?'var(--income)':'var(--expense)')+'"><i style="width:'+Math.min(100,b.v>0?Math.round(total/b.v*100):100)+'%"></i></div>';
+}
+const GRPS=[['ess','Обязательное'],['wish','Необязательное'],['rare','Редкая покупка'],['off','Не считать']];
+const FREQ=[[30,'Каждый день'],[15,'3–4 раза в неделю'],[8,'2 раза в неделю'],[4,'Раз в неделю'],[2,'2 раза в месяц'],[1,'Раз в месяц'],[0.5,'Раз в 2 месяца'],[0.33,'Раз в 3 месяца'],[0.17,'Раз в полгода']];
+const tagGrp=it=>{const t=tagOf(it);if(!t) return 'ess';return t.grp||(['daily','must','planned'].indexOf(t.id)>=0?'ess':'wish')};
+const grpOf=it=>(it&&it.eg&&it.eg!=='tag')?it.eg:tagGrp(it);
+const itemPrice=it=>(it&&(basePrice(it)||avgPrice(it.id)))||0;
+function buyDates(id){return [...state.buys.values()].filter(b=>b.itemId===id&&b.date).map(b=>b.date).sort()}
+function rareIv(id){const d=buyDates(id);return d.length>=2?ddays(d[0],d[d.length-1])/(d.length-1):0}
+function nextDue(r){
+  const d=buyDates(r.id);if(!d.length) return 'в истории ещё нет покупок';
+  const iv=r.src==='decl'&&r.fr>0?30/r.fr:rareIv(r.id)||60,due=addD(d[d.length-1],Math.round(iv)),today=todayISO();
+  const dd=ddays(today,due);
+  return dd<=0?'пора покупать':dd<=14?'ждём через ~'+dd+' дн.':'ждём около '+due.split('-').reverse().slice(0,2).join('.');
+}
+function estimate(){
+  const s=state.settings,today=todayISO(),buys=[...state.buys.values()].filter(b=>b.date&&b.date<=today);
+  const res={ok:false,src:'',ess:0,wish:0,rare:0,essM:0,wishM:0,rareM:0,days:0,n:0,span:0,rows:[],top:[]};
+  let first=today;buys.forEach(b=>{if(b.date<first) first=b.date});
+  const span=buys.length?ddays(first,today)+1:0,W=Math.max(1,Math.min(span||1,60)),from=addD(today,-(W-1));
+  const per=new Map();let n=0;
+  buys.forEach(b=>{if(b.date<from) return;const a=per.get(b.itemId)||{sum:0,cnt:0,name:b.name};a.sum+=Number(b.sum)||0;a.cnt++;per.set(b.itemId,a);n++});
+  const histOk=span>=14&&n>=8;
+  const ids=new Set(per.keys());state.items.forEach(it=>{if(Number(it.freq)>0) ids.add(it.id)});
+  const rows=[];let nh=0,nd=0;
+  ids.forEach(id=>{
+    const it=state.items.get(id),h=per.get(id);
+    if(it&&it.noEst) return;
+    let g=it?grpOf(it):'ess';if(g==='off') return;
+    const fm=(it&&it.fm)||'auto',fr=it?Number(it.freq)||0:0,cnt=h?h.cnt:0;
+    const histUsable=!!h&&span>=14&&(histOk||h.cnt>=3);
+    let m=0,src='';
+    if(fr>0&&(fm==='decl'||(fm==='auto'&&!histUsable))){m=fr*(Number(it.fq)||1)*itemPrice(it);src='decl'}
+    else if(h&&((fm==='hist'&&span>=2)||(fm!=='decl'&&histUsable))){m=h.sum/W*30;src='hist'}
+    else return;
+    if(m>0){if(src==='hist') nh++;else nd++}
+    if(g!=='rare'&&g!=='off'){const sm=it&&it.eg&&it.eg!=='tag';
+      if(!sm&&((src==='decl'&&fr>0&&fr<=0.7)||(src==='hist'&&cnt===1&&W>=60)||(src==='hist'&&rareIv(id)>=45))) g='rare'}
+    rows.push({id,n:it?it.name:h.name,g,m:r2(m),cnt,src,fr,noPrice:!(m>0)});
+  });
+  rows.sort((a,b)=>b.m-a.m);
+  res.rows=rows;res.days=W;res.n=n;res.span=span;
+  res.ess=rows.filter(r=>r.g==='ess').reduce((x,r)=>x+r.m,0)/30;res.wish=rows.filter(r=>r.g==='wish').reduce((x,r)=>x+r.m,0)/30;res.rare=rows.filter(r=>r.g==='rare').reduce((x,r)=>x+r.m,0)/30;
+  if(nh+nd>0){res.ok=true;res.src=nh?'history':'freq'}
+  const me=Number(s.manualEss)||0,mw=Number(s.manualWish)||0;
+  if((me>0||mw>0)&&(s.manualFirst||!res.ok)){res.ok=true;res.src='manual';res.ess=me/30;res.wish=mw/30}
+  res.essM=r2(res.ess*30);res.wishM=r2(res.wish*30);res.rareM=r2(res.rare*30);res.top=rows.filter(r=>r.g!=='rare').slice(0,8).filter(r=>r.m>0).map(r=>({n:r.n,m:r.m,g:r.g}));
+  return res;
+}
+function avgPrice(itemId){let s=0,q=0;state.buys.forEach(b=>{if(b.itemId===itemId&&b.price>0){s+=b.price*(Number(b.qty)||1);q+=Number(b.qty)||1}});return q>=2?s/q:0}
+function listTotal(){let t=0;entries().forEach(e=>{if(!e.done) t+=(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId))});return r2(t)}
+function shopSummary(){
+  const s=state.settings;
+  if(!s.toFin) return {include:false};
+  const by={};let total=0,n=0;const rows=[];
+  entries().forEach(e=>{if(e.done) return;const it=state.items.get(e.itemId),q=Number(e.qty)||1,p=q*entryUnit(e,it);total+=p;n++;const t=tagOf(it),tn=t?t.name:'Без метки';by[tn]=r2((by[tn]||0)+p);if(rows.length<30) rows.push({n:it.name,q,p:r2(p)})});
+  const E=estimate();
+  return {include:true,cur:s.currency,count:n,total:r2(total),byTag:by,items:rows,est:{ok:E.ok,src:E.src,ess:r2(E.ess),wish:r2(E.wish),rare:r2(E.rare),rareM:E.rareM,essM:E.essM,wishM:E.wishM,days:E.days,n:E.n,top:E.top}};
+}
+/* ---------- list ops ---------- */
+function addToList(itemId,qty){
+  const it=state.items.get(itemId);if(!it) return;
+  const ex=inList(itemId);
+  if(ex) Persist.put('list',Object.assign({},ex,{qty:r2((Number(ex.qty)||1)+(qty||1))}));
+  else Persist.put('list',{id:uid(),itemId,qty:qty||1,store:'',done:false});
+}
+function buyEntry(e){
+  const it=state.items.get(e.itemId);if(!it) return;
+  const q=Number(e.qty)||1,pr=entryUnit(e,it),sid=entryStore(e,it);
+  Persist.put('list',Object.assign({},e,{done:true,doneAt:todayISO()}));
+  Persist.put('buys',{id:uid(),entry:e.id,itemId:it.id,name:it.name,cat:it.cat||'',tag:it.tag||'',date:todayISO(),qty:q,price:pr,sum:r2(q*pr),store:sid});
+  Persist.put('items',Object.assign({},it,{have:r2((Number(it.have)||0)+q)}));
+}
+function unbuyEntry(e){
+  const it=state.items.get(e.itemId);
+  for(const b of [...state.buys.values()]) if(b.entry===e.id) Persist.del('buys',b.id);
+  Persist.put('list',Object.assign({},e,{done:false,got:false,doneAt:''}));
+  if(it){const q=Number(e.qty)||1;Persist.put('items',Object.assign({},it,{have:Math.max(0,r2((Number(it.have)||0)-q))}))}
+}
+/* ---------- view helpers ---------- */
+function fold(id,title,body,hint){
+  const open=!!prefs.open[id];
+  return '<section class="card fold"><button class="foldh" type="button" data-act="fold" data-id="'+id+'" aria-expanded="'+open+'"><span class="ft">'+title+'</span>'+(hint?'<span class="fh">'+hint+'</span>':'')
+    +'<svg class="ic chev'+(open?' up':'')+'" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>'+(open?'<div class="foldb">'+body+'</div>':'')+'</section>';
+}
+const chk=(on,act,id,cls,label)=>'<button class="chk '+cls+(on?' on':'')+'" type="button" data-act="'+act+'" data-id="'+esc(id)+'" aria-label="'+esc(label)+'">'+(on?ic('check'):'')+'</button>';
+const fchip=(on,act,v,label)=>'<button class="fchip'+(on?' on':'')+'" type="button" data-act="'+act+'" data-v="'+esc(v)+'">'+esc(label)+'</button>';
+const sub2=it=>funnyOn()&&dn(it)!==it.name?' · '+esc(it.name):'';
+function stockTxt(it){
+  const h=Number(it.have)||0,m=Number(it.min)||0,u=it.unit||'шт';
+  if(m>0) return h<m?'<span class="low">есть '+nfm(h)+' из '+nfm(m)+' '+u+'</span>':'есть '+nfm(h)+' '+u;
+  return h>0?'есть '+nfm(h)+' '+u:'';
+}
+/* ---------- views ---------- */
+function viewList(){
+  const all=entries(),open=all.filter(e=>!e.done),done=all.filter(e=>e.done),P=prefs.prices;
+  const total=listTotal(),shortN=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id)).length;
+  let h='<div class="stack">';
+  h+='<section class="card"><div class="qadd"><input id="q-add" class="inp" list="dl-items" placeholder="Что купить? Название и Enter" autocomplete="off"><button class="btn primary" type="button" data-act="q-add">Добавить</button></div>'
+    +'<datalist id="dl-items">'+[...state.items.values()].map(it=>'<option value="'+esc(dn(it))+'"></option>').join('')+'</datalist>'
+    +'<div class="chipbar" style="margin-top:10px">'
+    +'<button class="fchip act" type="button" data-act="short-add">Недостающее'+(shortN?' ('+shortN+')':'')+'</button>'
+    +'<button class="fchip act" type="button" data-act="pick-pack">Из пака</button>'
+    +(open.length?'<button class="fchip act" type="button" data-act="list-to-pack">Сохранить как пак</button>':'')
+    +(P&&open.length?'<button class="fchip act" type="button" data-act="cheap-all">Самые дешёвые магазины</button>':'')
+    +(open.some(e=>!e.got)?'<button class="fchip act" type="button" data-act="got-all">Отметить всё</button>':'')+(done.length?'<button class="fchip act" type="button" data-act="clear-done">Убрать купленное ('+done.length+')</button>':'')+'</div></section>';
+  if(P&&open.length){
+    let cheap=0;open.forEach(e=>{const it=state.items.get(e.itemId),c=cheapest(it),q=Number(e.qty)||1;cheap+=q*(c?c.p:entryUnit(e,it))});cheap=r2(cheap);
+    const byS={};open.forEach(e=>{const it=state.items.get(e.itemId),sid=entryStore(e,it),q=Number(e.qty)||1;byS[sid]=(byS[sid]||0)+q*entryUnit(e,it)});
+    h+='<section class="card"><div class="lbl">В списке '+open.length+' · примерно</div><div class="hero-num" style="color:var(--ink);font-size:clamp(24px,7vw,32px)">'+money(total)+'</div>';
+    h+=budgetLine(total)
+      +(Object.keys(byS).length>1?'<div class="s" style="margin-top:8px">'+Object.keys(byS).map(k=>esc(storeName(k)||'без магазина')+' '+money(byS[k])).join(' · ')+'</div>':'')
+      +(cheap<total-0.5?'<div class="s" style="margin-top:6px">По самым дешёвым ценам: <b class="num">'+money(cheap)+'</b> (<span class="okc">−'+money(total-cheap)+'</span>)</div>':'')+'</section>';
+  }
+  h+=adviceCard();
+  if(!state.items.size) return h+'<section class="card"><div class="empty">Пока пусто. Добавьте товары кнопкой «+» или посмотрите, как всё выглядит, на примере.</div><div class="actions"><button class="btn primary" type="button" data-act="demo">Загрузить пример</button></div></section></div>';
+  if(!all.length) return h+'<section class="card"><div class="empty">Список пуст. Впишите товар выше, возьмите из пака или нажмите «Недостающее».</div></section></div>';
+  h+='<div class="seg" role="group" aria-label="Группировка">'+[['store','По магазинам'],['cat','По категориям'],['none','Без групп']].map(g=>'<button type="button" data-act="group" data-v="'+g[0]+'" class="'+(ui.group===g[0]?'on':'')+'">'+g[1]+'</button>').join('')+'</div>';
+  const gk=e=>{const it=state.items.get(e.itemId);return ui.group==='store'?entryStore(e,it):ui.group==='cat'?(it.cat||''):''};
+  const gl=k=>ui.group==='store'?(storeName(k)||'Магазин не выбран'):ui.group==='cat'?(k||'Без категории'):'';
+  const groups=new Map();
+  open.concat(done).forEach(e=>{const k=gk(e);if(!groups.has(k)) groups.set(k,[]);groups.get(k).push(e)});
+  const keys=[...groups.keys()].sort((a,b)=>(gl(a)<gl(b)?-1:1));
+  h+='<section class="card">';
+  keys.forEach(k=>{
+    const arr=groups.get(k).sort((a,b)=>(a.done-b.done)||(dn(state.items.get(a.itemId))<dn(state.items.get(b.itemId))?-1:1));
+    const sum=arr.filter(e=>!e.done).reduce((s,e)=>s+(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId)),0);
+    if(ui.group!=='none') h+='<div class="grp"><b>'+esc(gl(k))+'</b>'+(P&&sum?'<span class="s num">'+money(sum)+'</span>':'')+'</div>';
+    h+=arr.map(entryRow).join('');
+  });
+  h+='</section>';
+  const got=open.filter(e=>e.got);
+  if(open.length||done.length){
+    const gs=r2(got.reduce((a,e)=>a+(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId)),0)),ts=todaySpent();
+    h+='<section class="card finish"><div class="s">'+(got.length?'Отмечено '+got.length+' из '+open.length+(P&&gs?' на '+money(gs):'')+'.':'Отмечайте купленное галочками. Когда закончите, нажмите кнопку: покупки запишутся в историю, а я покажу, сколько потрачено.')+(P&&ts?' Уже записано сегодня: '+money(ts)+'.':'')+'</div>'
+      +'<div class="actions" style="margin-top:8px"><button class="btn primary" type="button" data-act="finish"'+(got.length?'':' disabled')+'>Закончил покупки</button></div></section>';
+  }
+  return h+'</div>';
+}
+function todaySpent(){const t=todayISO();let s=0;state.buys.forEach(b=>{if(b.date===t) s+=Number(b.sum)||0});return r2(s)}
+function entryRow(e){
+  const it=state.items.get(e.itemId),q=Number(e.qty)||1,P=prefs.prices,u=entryUnit(e,it);
+  return '<div class="row'+(e.done?' done':e.got?' got':'')+'">'+chk(e.done||e.got,'buy',e.id,'ok',e.done?'Вернуть в список':e.got?'Снять отметку':'Отметить купленным')
+    +'<button class="rowmain" type="button" data-act="entry" data-id="'+esc(e.id)+'"><span class="tx"><span class="t">'+esc(dn(it))+'</span>'+tagChip(it)+'<br><span class="s">'+nfm(q)+' '+esc(it.unit||'шт')+(it.cat?' · '+esc(it.cat):'')+sub2(it)+'</span></span>'
+    +(P&&u?'<span class="amt-c"><span class="a">'+money(q*u)+'</span>'+(q!==1?'<span class="sub">'+money(u)+' за '+esc(it.unit||'шт')+'</span>':'')+'</span>':'')+'</button></div>';
+}
+function filtered(){
+  const q=norm(ui.q);
+  const out=[...state.items.values()].filter(it=>{
+    if(ui.cat&&(it.cat||'')!==ui.cat) return false;
+    if(ui.tag&&it.tag!==ui.tag) return false;
+    if(ui.store&&!(it.prices&&ui.store in it.prices)&&it.store!==ui.store) return false;
+    if(ui.only==='low'&&!(need(it)>0)) return false;
+    if(ui.only==='have'&&!(Number(it.have)>0)) return false;
+    return !q||hay(it).includes(q);
+  });
+  const cmp={name:(a,b)=>dn(a).localeCompare(dn(b),'ru'),cat:(a,b)=>(a.cat||'я').localeCompare(b.cat||'я','ru')||dn(a).localeCompare(dn(b),'ru'),price:(a,b)=>(basePrice(a)||1e12)-(basePrice(b)||1e12)};
+  return out.sort(cmp[ui.sort]||cmp.name);
+}
+function itemRow(it){
+  const sel=ui.sel.has(it.id),P=prefs.prices,ms=mainStore(it),bp=basePrice(it),c=cheapest(it),inl=!!inList(it.id);
+  const sub=[];if(it.cat) sub.push(esc(it.cat));const sk=stockTxt(it);if(sk) sub.push(sk);
+  if(!P&&ms) sub.push(esc(storeName(ms)));
+  return '<div class="row">'+(ui.selMode?chk(sel,'sel',it.id,'sel','Выбрать'):'')
+    +'<button class="rowmain" type="button" data-act="'+(ui.selMode?'sel':'item')+'" data-id="'+esc(it.id)+'"><span class="tx"><span class="t">'+esc(dn(it))+'</span>'+tagChip(it)+'<br><span class="s">'+(sub.join(' · ')||'&nbsp;')+sub2(it)+'</span></span>'
+    +(P?'<span class="amt-c">'+(bp?'<span class="a">'+money(bp)+'</span>':'<span class="s">нет цены</span>')+(ms?'<span class="sub">'+esc(storeName(ms))+(c&&c.sid!==ms&&c.p<bp?' · дешевле в '+esc(storeName(c.sid)):'')+'</span>':'')+'</span>':'')+'</button>'
+    +(ui.selMode?'':'<button class="icon-btn'+(inl?' on':'')+'" type="button" data-act="to-list" data-id="'+esc(it.id)+'" aria-label="'+(inl?'Убрать из списка':'В список')+'" style="width:36px;height:36px;border-radius:10px">'+ic(inl?'check':'plus')+'</button>')+'</div>';
+}
+function catalogHTML(){
+  const arr=filtered(),shown=arr.slice(0,ui.limit);
+  let h=shown.map(itemRow).join('')||'<div class="empty">'+(state.items.size?'Ничего не найдено.':'Пока пусто. Нажмите «+», чтобы добавить товар.')+'</div>';
+  if(arr.length>shown.length) h+='<div style="padding-top:8px"><button class="btn" type="button" data-act="more">Показать ещё ('+(arr.length-shown.length)+')</button></div>';
+  return h;
+}
+function viewItems(){
+  const arr=filtered(),s=state.settings;
+  const nAct=(ui.tag?1:0)+(ui.store?1:0)+(ui.only?1:0);
+  let h='<div class="stack"><section class="card"><input id="q" class="inp" type="search" placeholder="Поиск по названию, смешному названию, категории" value="'+esc(ui.q)+'" autocomplete="off">'
+    +'<div class="chipbar" style="margin-top:10px">'+fchip(!ui.cat,'f-cat','','Все')+s.cats.map(c=>fchip(ui.cat===c,'f-cat',c,c)).join('')+'</div></section>';
+  h+=fold('filters','Ещё фильтры и сортировка',
+    '<div class="lbl">Метка</div><div class="chipbar">'+fchip(!ui.tag,'f-tag','','Все')+s.tags.map(t=>fchip(ui.tag===t.id,'f-tag',t.id,t.name)).join('')+'</div>'
+    +'<div class="lbl">Магазин</div><div class="chipbar">'+fchip(!ui.store,'f-store','','Все')+[...state.stores.values()].map(t=>fchip(ui.store===t.id,'f-store',t.id,t.name)).join('')+'</div>'
+    +'<div class="lbl">Запас</div><div class="chipbar">'+fchip(!ui.only,'f-only','','Все')+fchip(ui.only==='low','f-only','low','Нужно докупить')+fchip(ui.only==='have','f-only','have','Есть дома')+'</div>'
+    +'<div class="lbl">Сортировка</div><div class="chipbar">'+[['name','По названию'],['cat','По категории'],['price','Сначала дешёвые']].map(x=>fchip(ui.sort===x[0],'f-sort',x[0],x[1])).join('')+'</div>',
+    nAct?'выбрано: '+nAct:'');
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="s" id="catcount">Найдено '+arr.length+' из '+state.items.size+'</span><button class="btn small'+(ui.selMode?' primary':'')+'" type="button" data-act="sel-mode">'+(ui.selMode?'Готово':'Выбрать несколько')+'</button></div>';
+  if(ui.selMode){
+    h+='<section class="card bulk"><div class="sec-h"><b>Выбрано: '+ui.sel.size+'</b><span><button class="link" type="button" data-act="sel-all">все найденные</button> · <button class="link" type="button" data-act="sel-none">снять</button></span></div>'
+      +'<div class="actions"><button class="btn small primary" type="button" data-act="bulk-list"'+(ui.sel.size?'':' disabled')+'>В список</button><button class="btn small" type="button" data-act="bulk-edit"'+(ui.sel.size?'':' disabled')+'>Где купить, категория…</button><button class="btn small" type="button" data-act="bulk-pack"'+(ui.sel.size?'':' disabled')+'>В пак</button><button class="btn small danger" type="button" data-act="bulk-del"'+(ui.sel.size?'':' disabled')+'>Удалить</button></div></section>';
+  }
+  return h+'<section class="card" id="catlist">'+catalogHTML()+'</section></div>';
+}
+function packCost(p){let t=0;(p.items||[]).forEach(x=>{const it=state.items.get(x.id);if(it) t+=(Number(x.q)||1)*basePrice(it)});return r2(t)}
+function viewPacks(){
+  const P=prefs.prices,arr=[...state.packs.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru')),b=budget();
+  let h='<div class="stack"><div class="actions"><button class="btn primary" type="button" data-act="pack-new">Новый пак</button></div>';
+  if(!arr.length) return h+'<section class="card"><div class="empty">Паки — это наборы товаров, как плейлисты: «Завтрак», «Уборка», «Поход». Соберите пак один раз и добавляйте в список одним нажатием.</div></section></div>';
+  h+=arr.map(p=>{
+    const its=(p.items||[]).map(x=>state.items.get(x.id)).filter(Boolean),cost=packCost(p);
+    return '<section class="card pk"><div class="hd"><div style="min-width:0"><b>'+esc(p.name)+'</b><div class="s">'+its.length+' товаров'+(P&&cost?' · примерно '+money(cost):'')+'</div></div>'
+      +(P&&b&&cost?'<span class="chip '+(cost<=b.v?'ok':'late')+'">'+(cost<=b.v?'потянем':'не хватает '+money(cost-b.v))+'</span>':'')+'</div>'
+      +'<div class="names">'+(its.slice(0,8).map(i=>esc(dn(i))).join(', ')||'пока пусто')+(its.length>8?' и ещё '+(its.length-8):'')+'</div>'
+      +'<div class="actions"><button class="btn small primary" type="button" data-act="pack-list" data-id="'+esc(p.id)+'">В список</button><button class="btn small" type="button" data-act="pack" data-id="'+esc(p.id)+'">Изменить</button></div></section>';
+  }).join('');
+  return h+'</div>';
+}
+function tierData(){
+  const from=ui.period==='all'?'0000-00-00':addD(todayISO(),-Number(ui.period)+1),agg=new Map();
+  for(const b of state.buys.values()){
+    if(b.date<from) continue;
+    const a=agg.get(b.itemId)||{id:b.itemId,name:b.name,n:0,sum:0,cat:b.cat,d1:b.date,d2:b.date};
+    a.n++;a.sum+=Number(b.sum)||0;if(b.date<a.d1) a.d1=b.date;if(b.date>a.d2) a.d2=b.date;agg.set(b.itemId,a);
+  }
+  return [...agg.values()].map(a=>{const it=state.items.get(a.id);if(it) a.name=dn(it);return a});
+}
+const wkStart=d=>{const t=new Date(d+'T00:00:00Z'),w=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-w);return t.toISOString().slice(0,10)};
+const dshort=d=>{const p=d.split('-');return +p[2]+'.'+p[1]};
+function weeklyChart(metric){
+  const today=todayISO(),buys=[...state.buys.values()].filter(b=>b.date&&b.date<=today);
+  if(!buys.length) return '';
+  let from=ui.period==='all'?buys.reduce((a,b)=>b.date<a?b.date:a,today):addD(today,-Number(ui.period)+1);
+  const cap=addD(today,-181);if(from<cap) from=cap;
+  const bk=[];for(let w=wkStart(from),end=wkStart(today);w<=end;w=addD(w,7)) bk.push({w,ess:0,wish:0,rare:0,off:0});
+  const idx=new Map(bk.map((b,i)=>[b.w,i]));
+  buys.forEach(b=>{if(b.date<from) return;const i=idx.get(wkStart(b.date));if(i==null) return;const it=state.items.get(b.itemId),g=it?grpOf(it):'ess';bk[i][g]=(bk[i][g]||0)+(metric==='sum'?(Number(b.sum)||0):1)});
+  const tot=bk.map(b=>b.ess+b.wish+b.rare+b.off),max=Math.max.apply(null,tot.concat([1]));
+  const n=bk.length,W=340,H=150,pb=22,pt=16,gap=n>13?4:6,bw=Math.max(5,Math.floor((W-gap*(n+1))/n)),fmt=v=>metric==='sum'?(v>=10000?Math.round(v/1000)+'к':v>=1000?(Math.round(v/100)/10).toString().replace('.',',')+'к':String(Math.round(v))):String(v);
+  const col={ess:'var(--accent)',wish:'var(--warn)',rare:'var(--p2)',off:'var(--muted)'};
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" class="chart" role="img" aria-label="Покупки по неделям">';
+  bk.forEach((b,i)=>{
+    const x=gap+i*(bw+gap);let y=H-pb;
+    ['ess','wish','rare','off'].forEach(g=>{const v=b[g];if(!v) return;const h=Math.max(2,v/max*(H-pb-pt));y-=h;svg+='<rect x="'+x+'" y="'+r2(y)+'" width="'+bw+'" height="'+r2(h)+'" rx="3" fill="'+col[g]+'"/>'});
+    if(tot[i]&&n<=10) svg+='<text x="'+(x+bw/2)+'" y="'+r2(y-4)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+fmt(tot[i])+'</text>';
+    const step=n>14?4:n>8?2:1;if(i%step===0||i===n-1&&step===1) svg+='<text x="'+(x+bw/2)+'" y="'+(H-6)+'" text-anchor="middle" font-size="10" fill="var(--muted)">'+dshort(b.w)+'</text>';
+  });
+  svg+='</svg>';
+  const used=['ess','wish','rare','off'].filter(g=>bk.some(b=>b[g]>0));
+  const names={ess:'Обязательное',wish:'Необязательное',rare:'Редкие',off:'Не считается в прогнозе'};
+  return svg+'<div class="legend2">'+used.map(g=>'<span><i style="background:'+col[g]+'"></i>'+names[g]+'</span>').join('')+'</div>';
+}
+function viewTier(){
+  const P=prefs.prices,metric=(!P&&ui.metric==='sum')?'cnt':ui.metric,data=tierData(),val=a=>metric==='sum'?a.sum:a.n;
+  let h='<div class="stack"><div class="seg" role="group">'+[['30','30 дней'],['90','90 дней'],['all','Всё время']].map(x=>'<button type="button" data-act="t-period" data-v="'+x[0]+'" class="'+(ui.period===x[0]?'on':'')+'">'+x[1]+'</button>').join('')+'</div>'
+    +'<div class="seg" role="group"><button type="button" data-act="t-metric" data-v="cnt" class="'+(metric==='cnt'?'on':'')+'">Сколько покупок</button><button type="button" data-act="t-metric" data-v="sum" class="'+(metric==='sum'?'on':'')+'"'+(P?'':' disabled')+'>Сколько денег</button></div>';
+  if(!data.length) return h+'<section class="card"><div class="empty">Пока нет покупок. Отмечайте товары в списке и нажимайте «Закончил покупки», и здесь появятся графики.</div></section></div>';
+  const totN=data.reduce((s,a)=>s+a.n,0),totS=data.reduce((s,a)=>s+a.sum,0),today=todayISO();
+  const days=ui.period==='all'?Math.max(1,ddays(data.reduce((a,x)=>x.d1<a?x.d1:a,today),today)+1):Number(ui.period);
+  h+='<section class="card"><div class="sec-h"><h3>По неделям</h3><span class="s">'+(metric==='sum'?money(totS):totN+' покупок')+'</span></div>'+weeklyChart(metric)
+    +'<div class="s" style="margin-top:6px">'+(P&&totS?'В среднем '+money(totS/days)+' в день, ~'+money(totS/days*30)+' в месяц.':'В среднем '+r2(totN/days*7)+' покупок в неделю.')+'</div></section>';
+  data.sort((a,b)=>val(b)-val(a));const max=val(data[0])||1;
+  h+='<section class="card"><div class="sec-h"><h3>Чаще и дороже всего</h3></div>'+data.slice(0,8).map(a=>{
+    const iv=a.n>=3?Math.max(1,Math.round(ddays(a.d1,a.d2)/(a.n-1))):0;
+    return '<div class="barrow2"><div class="bl"><b>'+esc(a.name)+'</b><span class="s">'+(iv?(iv===1?'почти каждый день':'раз в ~'+iv+' дн.'):'')+'</span></div><div class="meter"><i style="width:'+Math.max(3,Math.round(val(a)/max*100))+'%"></i></div><span class="num">'+(metric==='sum'?money(a.sum):'×'+a.n)+'</span></div>';
+  }).join('')+'</section>';
+  const byC=new Map();data.forEach(a=>{const k=a.cat||'Без категории';byC.set(k,(byC.get(k)||0)+val(a))});
+  const cats=[...byC.entries()].sort((a,b)=>b[1]-a[1]),cmax=cats[0][1],ctot=cats.reduce((s,c)=>s+c[1],0);
+  h+='<section class="card"><h3>По категориям</h3>'+cats.map(c=>'<div class="barrow"><span>'+esc(c[0])+'</span><div class="meter"><i style="width:'+Math.round(c[1]/cmax*100)+'%"></i></div><span class="num">'+(metric==='sum'?money(c[1]):'×'+c[1])+' <span class="s">'+Math.round(c[1]/ctot*100)+'%</span></span></div>').join('')+'</section>';
+  const T=[['S',.75,'var(--expense)'],['A',.5,'var(--p1)'],['B',.3,'var(--warn)'],['C',.15,'var(--p2)'],['D',0,'var(--muted)']];
+  const rows=T.map(t=>({t,items:[]}));
+  data.forEach(a=>{const r=max?val(a)/max:0;const row=rows.find(x=>r>=x.t[1]);row.items.push(a)});
+  h+=fold('tierfold','Тир-лист покупок',rows.map(r=>'<div class="tier" style="--c:'+r.t[2]+'"><div class="lb">'+r.t[0]+'</div><div class="it">'+(r.items.length?r.items.map(a=>'<span>'+esc(a.name)+'<em>'+(metric==='sum'?money(a.sum):'×'+a.n)+'</em></span>').join(''):'<span class="s" style="border:0;background:none">никого</span>')+'</div></div>').join(''),totN+' покупок');
+  return h+'</div>';
+}
+function adviceCard(){
+  const open=entries().filter(e=>!e.done);if(!open.length||!prefs.prices) return '';
+  const b=budget();
+  if(!b) return '<section class="card"><div class="s">Чтобы я сам видел свободные деньги и подсказывал, куда уложиться, подключите синхронизацию с «Моей кассой» (Ещё → Синхронизация). Свободные деньги можно также ввести вручную.</div><div class="actions" style="margin-top:8px"><button class="btn small" type="button" data-act="tab" data-t="settings">Открыть настройки</button></div></section>';
+  const rows=open.map(e=>{const it=state.items.get(e.itemId),q=Number(e.qty)||1,u=entryUnit(e,it);return {e,it,u,sum:q*u,g:grpOf(it)}});
+  const total=rows.reduce((a,r)=>a+r.sum,0),left=b.v-total,ok=left>=0;
+  let h='<section class="card"><div class="sec-h"><h3>'+(ok?'Укладываемся в бюджет':'Выходим за бюджет на '+money(-left))+'</h3><span class="s">на руках сверх запланированного: '+money(b.v)+'</span></div>';
+  if(b.stale) h+='<div class="hint" style="margin-bottom:8px">Данные кассы обновлялись '+new Date(b.u).toLocaleDateString('ru',{day:'numeric',month:'long'})+'. Откройте кассу, чтобы цифры были свежими.</div>';
+  if(!ok){
+    const cands=rows.filter(r=>r.g!=='ess'&&r.g!=='rare'&&r.sum>0).sort((a,b2)=>b2.sum-a.sum),cut=[];let acc=0;
+    for(const r of cands){if(acc>=-left) break;cut.push(r);acc+=r.sum}
+    if(cut.length){
+      h+='<div class="lbl">Можно убрать (необязательное, дорогое первым)</div>'+cut.map(r=>'<div class="row"><span style="flex:1;min-width:0"><b>'+esc(dn(r.it))+'</b>'+tagChip(r.it)+'</span><span class="a">'+money(r.sum)+'</span><button class="btn small" type="button" data-act="cut" data-id="'+esc(r.e.id)+'">Убрать</button></div>').join('')
+        +'<div class="s" style="margin-top:6px">'+(acc>=-left?'Если убрать всё это, вернёмся в бюджет, останется '+money(acc+left)+'.':'Даже без необязательного не хватит '+money(-left-acc)+'.')+'</div>'
+        +'<div class="actions" style="margin-top:8px"><button class="btn small primary" type="button" data-act="cut-all" data-ids="'+cut.map(r=>esc(r.e.id)).join(',')+'">Убрать всё предложенное</button></div>';
+    }else h+='<div class="s">В списке только обязательное, убирать нечего. Попробуйте магазины подешевле.</div>';
+  }else if(left<b.v*0.15){h+='<div class="s">После этого списка останется всего '+money(left)+'.</div>'}
+  else h+='<div class="s">После этого списка останется '+money(left)+'.</div>';
+  if(b.eday>0&&b.src==='касса'){
+    const later=Math.max(0,b.eday-total),rest=left-later;
+    h+='<div class="s" style="margin-top:6px">До ближайшего дохода'+(b.next?' ('+esc(b.next)+')':'')+' по вашей истории на повседневное уходит ещё около '+money(b.eday)+'. '+(rest>=0?'<span class="okc">Всего должно хватить.</span>':'<span class="low">Может не хватить около '+money(-rest)+', лучше урезать необязательное.</span>')+'</div>';
+  }
+  let cheap=0;rows.forEach(r=>{const c=cheapest(r.it),q=Number(r.e.qty)||1;cheap+=q*(c?c.p:r.u)});
+  if(cheap<total-0.5) h+='<div class="s" style="margin-top:6px">В самых дешёвых магазинах этот же список выйдет на <b class="num">'+money(cheap)+'</b>, это на '+money(total-cheap)+' меньше.</div>';
+  const up=rows.filter(r=>{const a=avgPrice(r.it.id);return a>0&&r.u>a*1.15});
+  if(up.length) h+='<div class="s" style="margin-top:6px">Дороже обычного: '+up.slice(0,4).map(r=>esc(dn(r.it))+' ('+money(r.u)+' вместо '+money(avgPrice(r.it.id))+')').join(', ')+'.</div>';
+  return h+'</section>';
+}
+function viewSpend(){
+  const E=estimate(),s=state.settings;let share;
+  if(!s.toFin) share='<span class="low">Не отправляется в кассу: выключено в «Ещё → Бюджет и связь с кассой».</span>';
+  else if(!Sync.cfg) share='<span class="low">Касса пока не видит эти данные: включите синхронизацию (Ещё → Синхронизация).</span>';
+  else if(E.ok) share='<span class="okc">Касса учитывает это в прогнозе остатка и в «нужно отложить».</span>';
+  else share='<span class="low">Данных пока мало.</span> Нужно хотя бы 14 дней истории и несколько покупок (сейчас '+E.span+' дн. и '+E.n+' покупок). Или укажите товару, как часто его покупаете, или впишите сумму вручную ниже.';
+  const big=v=>'<div class="hero-num" style="color:var(--ink);font-size:clamp(22px,6vw,30px)">'+(E.ok||v?money(v):'—')+'</div>';
+  let h='<div class="stack"><section class="card"><div class="lbl">Примерно в месяц на повседневное'+(E.src==='manual'?' (ваша сумма)':E.src==='history'?' (по истории за '+E.days+' дн. и вашим частотам)':E.src==='freq'?' (по заданным частотам покупок)':'')+'</div>'
+    +'<div class="grid2" style="margin-top:8px"><div><div class="lbl">Обязательное</div>'+big(E.essM)+'</div><div><div class="lbl">Необязательное</div>'+big(E.wishM)+'</div></div>'+(E.rareM>0?'<div class="s" style="margin-top:6px">Редкие покупки (паста, порошок…): в среднем '+money(E.rareM)+' в месяц, отдельно.</div>':'')
+    +'<div class="s" style="margin-top:8px">'+share+'</div></section>';
+  h+='<section class="card set-sec"><h3>Своя сумма</h3><p class="s">Пригодится, пока истории мало, или если вы покупаете не всё через приложение. Впишите, сколько примерно тратите в месяц.</p>'
+    +'<div class="row2"><label class="field"><span>Обязательное в месяц</span><input class="inp" type="text" inputmode="decimal" data-set="manualEss" value="'+esc(Number(s.manualEss)>0?s.manualEss:'')+'" placeholder="0" autocomplete="off"></label>'
+    +'<label class="field"><span>Необязательное в месяц</span><input class="inp" type="text" inputmode="decimal" data-set="manualWish" value="'+esc(Number(s.manualWish)>0?s.manualWish:'')+'" placeholder="0" autocomplete="off"></label></div>'
+    +'<label class="check"><input type="checkbox" data-set="manualFirst"'+(s.manualFirst?' checked':'')+'><span>Всегда брать мою сумму, а не расчёт по товарам</span></label></section>';
+  const lbl=r=>r.src==='decl'?'по вашей частоте: '+nfm(r.fr)+' раз/мес':'по истории: '+r.cnt+' раз';
+  const rowsFor=g=>E.rows.filter(r=>r.g===g).map(r=>'<div class="row">'+chk(true,'est-toggle',r.id,'ok','Не учитывать')+'<button class="rowmain" type="button" data-act="item-hist" data-id="'+esc(r.id)+'"><span class="tx"><span class="t">'+esc(r.n)+'</span><br><span class="s">'+lbl(r)+(r.noPrice?' · нет цены':'')+'</span></span><span class="amt-c"><span class="a">'+money(r.m)+'</span><span class="sub">в месяц</span></span></button></div>').join('')||'<div class="empty">Пока нет данных.</div>';
+  h+='<section class="card"><div class="sec-h"><h3>Обязательное и регулярное</h3></div>'+rowsFor('ess')+'</section>';
+  h+='<section class="card"><div class="sec-h"><h3>Необязательное и внеплановое</h3></div>'+rowsFor('wish')+'</section>';
+  const rr=E.rows.filter(r=>r.g==='rare');
+  if(rr.length) h+='<section class="card"><div class="sec-h"><h3>Редкие покупки</h3><span class="s">в среднем '+money(E.rareM)+' / мес.</span></div><p class="s">Нужные, но покупаются раз в пару месяцев и дольше. В повседневные траты они не входят, чтобы не раздувать каждый месяц. Касса может учесть их в среднем, это включается в её настройках.</p>'+rr.map(r=>'<div class="row">'+chk(true,'est-toggle',r.id,'ok','Не учитывать')+'<button class="rowmain" type="button" data-act="item-hist" data-id="'+esc(r.id)+'"><span class="tx"><span class="t">'+esc(r.n)+'</span><br><span class="s">'+esc(nextDue(r))+'</span></span><span class="amt-c"><span class="a">'+money(r.m)+'</span><span class="sub">в среднем в месяц</span></span></button></div>').join('')+'</section>';
+  const ex=[...state.items.values()].filter(it=>it.noEst);
+  if(ex.length) h+='<section class="card"><div class="sec-h"><h3>Не учитываются</h3></div>'+ex.map(it=>'<div class="row">'+chk(false,'est-toggle',it.id,'ok','Учитывать')+'<span style="flex:1">'+esc(dn(it))+'</span></div>').join('')+'</section>';
+  h+='<section class="card set-sec"><h3>Как это считается</h3><p class="s">Нажмите на строку или найдите товар в «Товарах» и откройте «История покупок и частота»: там можно указать, как часто вы его берёте (каждый день, раз в неделю…), поправить историю, добавить прошлые покупки или убрать лишние. Для каждого товара берётся история, если её достаточно (две недели и хотя бы три покупки), иначе ваша частота. Кружок слева исключает товар из оценки.</p>'
+    +'<div class="actions"><button class="btn small" type="button" data-act="buys-clear" data-d="7">Стереть покупки за 7 дней</button><button class="btn small danger" type="button" data-act="buys-clear" data-d="all">Стереть всю историю</button></div></section>';
+  return h+'</div>';
+}
+const ACTIONS=[
+  {id:'add',label:'Новый товар',def:'KeyN'},
+  {id:'quick',label:'Быстро добавить в список',def:'KeyA'},
+  {id:'search',label:'Поиск по товарам',def:'KeyF'},
+  {id:'undo',label:'Отменить действие',def:'Ctrl+KeyZ'},
+  {id:'redo',label:'Вернуть отменённое',def:'Ctrl+Shift+KeyZ'},
+  {id:'t1',label:'Вкладка «Список»',def:'Digit1',tab:'list'},
+  {id:'t2',label:'Вкладка «Товары»',def:'Digit2',tab:'items'},
+  {id:'t3',label:'Вкладка «Паки»',def:'Digit3',tab:'packs'},
+  {id:'t4',label:'Вкладка «Траты»',def:'Digit4',tab:'spend'},
+  {id:'t5',label:'Вкладка «Статистика»',def:'Digit5',tab:'tier'},
+  {id:'t6',label:'Вкладка «Ещё»',def:'Digit6',tab:'settings'},
+  {id:'tabPrev',label:'Предыдущая вкладка',def:'BracketLeft'},
+  {id:'tabNext',label:'Следующая вкладка',def:'BracketRight'},
+  {id:'prices',label:'Показать или скрыть цены',def:'KeyP'},
+  {id:'names',label:'Обычные или смешные названия',def:'KeyY'},
+  {id:'selmode',label:'Выбрать несколько товаров',def:'KeyS'},
+  {id:'selall',label:'Выбрать все найденные',def:'Ctrl+KeyA'},
+  {id:'short',label:'Добавить недостающее в список',def:'KeyH'},
+  {id:'clear',label:'Убрать купленное из списка',def:'KeyC'},
+  {id:'export',label:'Скачать резервную копию',def:'Ctrl+KeyS'},
+  {id:'import',label:'Загрузить из файла',def:'Ctrl+KeyO'},
+  {id:'help',label:'Список горячих клавиш',def:'Shift+Slash'},
+  {id:'save',label:'Сохранить в открытом окне (Ctrl+Enter работает всегда)',def:'Enter',ctx:'modal'}
+];
+/* ---------- settings view ---------- */
+function viewSettings(){
+  const s=state.settings,b=state.bridge;
+  const chips=(arr,act)=>'<div class="chips">'+arr.map(c=>'<span class="catchip">'+esc(c)+'<button type="button" data-act="'+act+'" data-n="'+esc(c)+'" aria-label="Удалить '+esc(c)+'">×</button></span>').join('')+'</div>';
+  const tagrows='<p class="s">Для каждой метки выберите, как считать такие покупки в оценке трат: обязательное, необязательное или не считать.</p>'+s.tags.map(t=>'<div class="row"><i class="dot" style="--c:var(--p'+t.c+');background:var(--p'+t.c+')"></i><span style="flex:1;min-width:0;font-weight:600">'+esc(t.name)+'</span><select class="inp" style="max-width:150px" data-tg="'+esc(t.id)+'">'+GRPS.map(o=>'<option value="'+o[0]+'"'+(((t.grp)||(['daily','must','planned'].indexOf(t.id)>=0?'ess':'wish'))===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select><button class="btn small danger" type="button" data-act="tag-del" data-id="'+esc(t.id)+'">×</button></div>').join('')
+    +'<div class="catadd"><input id="tag-add" class="inp" type="text" placeholder="Новая метка, например «Для дачи»" autocomplete="off"><button class="btn" type="button" data-act="tag-add">Добавить</button></div>';
+  const storerows=[...state.stores.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru')).map(x=>{
+    const n=[...state.items.values()].filter(it=>it.prices&&x.id in it.prices).length;
+    return '<div class="row"><label class="field" style="flex:1"><input class="inp" type="text" data-sn="'+esc(x.id)+'" value="'+esc(x.name)+'" autocomplete="off"></label><span class="s">'+n+' тов.</span><button class="btn small danger" type="button" data-act="store-del" data-id="'+esc(x.id)+'">Удалить</button></div>';
+  }).join('')+'<div class="catadd"><input id="store-add" class="inp" type="text" placeholder="Новый магазин" autocomplete="off"><button class="btn" type="button" data-act="store-add">Добавить</button></div>';
+  const keyrows=ACTIONS.map(a=>'<div class="keyrow"><span>'+esc(a.label)+'</span><span style="display:flex;gap:8px;align-items:center"><kbd>'+(ui.capturing===a.id?'нажмите клавиши…':esc(comboLabel(keyOf(a))))+'</kbd><button class="btn small" type="button" data-act="key-set" data-id="'+a.id+'">'+(ui.capturing===a.id?'Отмена':'Изменить')+'</button></span></div>').join('');
+  let h='<div class="stack"><h3 style="font-size:18px">Ещё</h3>';
+  h+='<section class="card set-sec"><h3>Названия товаров</h3><div class="seg" role="group">'+MODES.map(m=>'<button type="button" data-act="mode" data-v="'+m[0]+'" class="'+(s.nameMode===m[0]?'on':'')+'">'+m[1]+'</button>').join('')+'</div>'
+    +'<p class="s">«Обычные» показывают нормальное название. «Смешные 1–3» показывают вариант по порядку из тех, что вы вписали у товара («хлиб», «хлеп»…). Если у товара нет такого варианта, берётся обычное название. «Случайные» выбирают вариант сами и не меняют его при каждом открытии.</p></section>';
+  h+='<section class="card set-sec"><h3>Бюджет и связь с «Моей кассой»</h3>'
+    +'<label class="check"><input type="checkbox" data-set="useFin"'+(s.useFin?' checked':'')+'><span>Брать свободные деньги из кассы автоматически</span></label>'
+    +'<div class="sync-st">'+(b&&isFinite(b.free)?'Касса сообщает: на руках сверх запланированного <b>'+money(Math.max(0,b.free))+'</b>'+(Number(b.free)<0?' (по плану не хватает '+money(-b.free)+')':'')+(b.next?', ближайший доход '+esc(b.next):'')+'. Обновлено '+new Date(b.u||Date.now()).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'.':'Касса пока ничего не прислала. Подключите синхронизацию с тем же кодом, что и в кассе, и обновите кассу до версии с мостом.')+'</div>'
+    +'<label class="field"><span>Свободные деньги вручную (работает и без кассы)</span><input class="inp" type="text" inputmode="decimal" data-set="budget" value="'+esc(Number(s.budget)>0?s.budget:'')+'" placeholder="0" autocomplete="off"></label>'
+    +'<label class="check"><input type="checkbox" data-set="budgetManual"'+(s.budgetManual?' checked':'')+'><span>Всегда брать мою сумму, даже если касса подключена</span></label>'
+    +'<label class="check"><input type="checkbox" data-set="toFin"'+(s.toFin?' checked':'')+'><span>Делиться с кассой списком покупок и оценкой повседневных трат</span></label>'
+    +'<p class="s">Касса использует оценку из вкладки «Траты», чтобы прогноз остатка учитывал продукты. Цены нужны, чтобы видеть, хватает ли денег. Кнопка с монетой вверху скрывает их только на этом устройстве.</p></section>';
+  h+=fold('cats','Категории',chips(s.cats,'cat-del')+'<div class="catadd"><input id="cat-add" class="inp" type="text" placeholder="Новая категория" autocomplete="off"><button class="btn" type="button" data-act="cat-add">Добавить</button></div>',s.cats.length+' шт.');
+  h+=fold('tags','Метки (плановая, внеплановая, хотелка…)',tagrows,s.tags.length+' шт.');
+  h+=fold('stores','Магазины',storerows,state.stores.size+' шт.');
+  h+='<section class="card set-sec"><h3>Валюта</h3><select class="inp" data-set="currency">'+['₽','$','€','₸','¥','₴','Br'].map(c=>'<option'+(c===s.currency?' selected':'')+'>'+c+'</option>').join('')+'</select></section>';
+  h+=fold('keys','Горячие клавиши','<div class="set-sec"><p class="s">Работают на компьютере, когда курсор не в поле ввода. Раскладка не важна. Esc закрывает окно.</p><div>'+keyrows+'</div><div><button class="btn" type="button" data-act="keys-reset">Сбросить к стандартным</button></div></div>','изменить сочетания');
+  h+=syncCard();
+  h+='<section class="card set-sec"><h3>Резервная копия и перенос</h3><p class="s">Файл .json со всеми товарами, паками, магазинами и историей.</p>'
+    +'<div class="actions"><button class="btn primary" type="button" data-act="export">Скачать файл</button></div>'
+    +'<div class="drop" id="drop" data-act="pick-file" role="button" tabindex="0">Перетащите файл .json сюда<br>или нажмите, чтобы выбрать</div></section>';
+  h+='<section class="card set-sec"><h3>Данные</h3><p class="s">Данные хранятся в этом браузере'+(Sync.cfg?' и в вашем облаке.':'. Включите синхронизацию, чтобы они были на всех устройствах.')+'</p>'
+    +'<div class="actions"><button class="btn" type="button" data-act="demo">Загрузить пример</button><button class="btn danger" type="button" data-act="wipe">Удалить все данные</button></div></section></div>';
+  return h;
+}
+/* ---------- render ---------- */
+let raf=0,pending=false;
+function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>render())}
+function renderHeader(){
+  $('#b-undo').disabled=!hist.undo.length;
+  $('#b-prices').classList.toggle('on',prefs.prices);
+  $('#b-names').classList.toggle('on',funnyOn());
+}
+function render(force){
+  const main=$('#main');renderHeader();
+  const ae=document.activeElement;
+  if(force!==true&&ae&&main.contains(ae)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)){pending=true;return}
+  pending=false;
+  const views={list:viewList,items:viewItems,packs:viewPacks,spend:viewSpend,tier:viewTier,settings:viewSettings};
+  main.innerHTML=views[ui.tab]();
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===ui.tab));
+  $('#fab').hidden=ui.tab==='settings'||ui.tab==='tier'||ui.tab==='spend';
+}
+document.addEventListener('focusout',()=>{if(pending) setTimeout(()=>{if(pending) schedule()},50)});
+function setTab(t){ui.tab=t;render(true);window.scrollTo(0,0)}
+/* ---------- forms ---------- */
+const optList=(arr,sel,first)=>(first==null?'':'<option value="">'+first+'</option>')+arr.map(x=>{const v=typeof x==='string'?x:x.id,l=typeof x==='string'?x:x.name;return '<option value="'+esc(v)+'"'+(v===sel?' selected':'')+'>'+esc(l)+'</option>'}).join('');
+const sortedStores=()=>[...state.stores.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+function openItemForm(id,pre){
+  const it=id?state.items.get(id):null,s=state.settings,x=it||Object.assign({name:'',funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}},pre||{});
+  fs={kind:'item',id:id||null};
+  const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'" placeholder="нет в этом магазине" value="'+esc(x.prices&&x.prices[st.id]>0?x.prices[st.id]:'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
+  const body='<div class="form"><label class="field"><span>Название (нормальное)</span><input id="i-name" class="inp" type="text" value="'+esc(x.name)+'" autocomplete="off" placeholder="Хлеб"></label>'
+    +'<label class="field"><span>Смешные названия через запятую (необязательно)</span><input id="i-funny" class="inp" type="text" value="'+esc((x.funny||[]).join(', '))+'" autocomplete="off" placeholder="хлиб, хлеп"></label>'
+    +'<div class="row2"><label class="field"><span>Категория</span><select id="i-cat" class="inp">'+optList(s.cats.concat(x.cat&&s.cats.indexOf(x.cat)<0?[x.cat]:[]),x.cat,'Без категории')+'</select></label>'
+    +'<label class="field"><span>Метка</span><select id="i-tag" class="inp">'+optList(s.tags,x.tag,'Без метки')+'</select></label></div>'
+    +'<div class="row2"><label class="field"><span>Есть сейчас</span><input id="i-have" class="inp" type="text" inputmode="decimal" value="'+esc(x.have||'')+'" placeholder="0"></label>'
+    +'<label class="field"><span>Хочу держать не меньше</span><input id="i-min" class="inp" type="text" inputmode="decimal" value="'+esc(x.min||'')+'" placeholder="0"></label></div>'
+    +'<div class="row2"><label class="field"><span>Единица</span><select id="i-unit" class="inp">'+optList(UNITS,x.unit||'шт')+'</select></label>'
+    +'<label class="field"><span>Обычная цена ('+esc(s.currency)+')</span><input id="i-price" class="inp" type="text" inputmode="decimal" value="'+esc(x.price||'')+'" placeholder="если нет цены по магазинам"></label></div>'
+    +'<label class="field"><span>Основной магазин</span><select id="i-store" class="inp">'+optList(sortedStores(),x.store,'Выбрать автоматически (самый дешёвый)')+'</select></label>'
+    +'<div><div class="lbl" style="margin-bottom:6px">Цены по магазинам (где можем купить)</div>'+sp+'</div>'+(it?'<div class="actions"><button class="btn" type="button" data-act="item-hist" data-id="'+esc(it.id)+'">История покупок и частота</button></div>':'')+'<div class="err" id="i-err" role="alert"></div></div>';
+  openSheet(it?'Товар':'Новый товар',body,'<div class="actions">'+(it?'<button class="btn danger" type="button" data-act="item-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="item-save" data-primary="1">Сохранить</button></div>','i-name');
+}
+function saveItem(){
+  const name=$('#i-name').value.trim();if(!name) return ($('#i-err').textContent='Введите название.');
+  const old=fs.id?state.items.get(fs.id):null,dup=findItemByName(name);
+  if(dup&&(!old||dup.id!==old.id)) return ($('#i-err').textContent='Такой товар уже есть: '+dup.name+'.');
+  const num=v=>{v=String(v).trim();if(!v) return 0;const n=parseAmount(v);return isFinite(n)&&n>=0?n:0};
+  const prices={};document.querySelectorAll('[data-sp]').forEach(i=>{const p=num(i.value);if(p>0) prices[i.dataset.sp]=p});
+  if(old&&old.prices) for(const k in old.prices) if(!state.stores.has(k)) prices[k]=old.prices[k];
+  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:$('#i-funny').value.split(/[,;]+/).map(v=>v.trim()).filter(Boolean),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:num($('#i-price').value)||'',store:$('#i-store').value,prices});
+  closeSheet();commit(old?'Товар изменён':'Товар добавлен',()=>Persist.put('items',o));
+}
+function openFinish(){
+  const g=entries().filter(e=>!e.done&&e.got);
+  if(!g.length){toast('Сначала отметьте купленное галочками');return}
+  fs={kind:'finish'};
+  let tot=0;const byS={};
+  const rows=g.map(e=>{const it=state.items.get(e.itemId),q=Number(e.qty)||1,u=entryUnit(e,it),p=q*u;tot+=p;const sn=storeName(entryStore(e,it))||'без магазина';byS[sn]=(byS[sn]||0)+p;
+    return '<div class="keyrow"><span>'+esc(dn(it))+' <span class="s">× '+nfm(q)+'</span></span><span class="num">'+(u?money(p):'без цены')+'</span></div>'}).join('');
+  const ts=todaySpent(),sk=Object.keys(byS);
+  openSheet('Закончили покупки?','<div class="form"><div class="card" style="padding:4px 14px">'+rows+'</div>'
+    +'<div class="keyrow" style="border:0"><span><b>Итого</b></span><b class="num">'+money(tot)+'</b></div>'
+    +(sk.length>1?'<div class="s">'+sk.map(k=>esc(k)+' '+money(byS[k])).join(' · ')+'</div>':'')
+    +(ts?'<div class="s">Вместе с уже записанным сегодня выйдет '+money(ts+tot)+'.</div>':'')
+    +'<p class="s">Покупки попадут в историю, и от неё будет считаться оценка трат для кассы. Неотмеченное останется в списке.</p></div>',
+    '<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="close">Ещё не всё</button><button class="btn primary" type="button" data-act="finish-do" data-primary="1">Записать покупки</button></div>');
+}
+function openFinished(n,tot){
+  fs={kind:'done'};
+  const all=todaySpent(),txt=String(r2(all)).replace('.',',');
+  openSheet('Готово','<div class="form"><div class="s">Записано позиций: '+n+'.</div><div class="lbl">Потрачено сегодня</div><div class="hero-num" style="color:var(--ink)">'+money(all)+'</div>'
+    +(all!==r2(tot)?'<div class="s">из них эти покупки: '+money(tot)+'.</div>':'')+'<p class="s">Внесите эту сумму в «Моей кассе» как расход (например, «Продукты»). Автоматически я ничего туда не списываю.</p></div>',
+    '<div class="actions"><button class="btn primary" type="button" data-act="copy-sum" data-v="'+esc(txt)+'">Скопировать сумму</button><span class="grow"></span><button class="btn" type="button" data-act="close">Закрыть</button></div>');
+}
+function openHist(id){
+  const it=state.items.get(id);if(!it) return;
+  fs={kind:'hist',id};
+  const fr=Number(it.freq)||0,preset=FREQ.some(f=>f[0]===fr),today=todayISO();
+  const bs=[...state.buys.values()].filter(b=>b.itemId===id).sort((a,b)=>a.date<b.date?1:a.date>b.date?-1:0);
+  const c30=bs.filter(b=>b.date>=addD(today,-29)).length;
+  const opts=(list,cur)=>list.map(o=>'<option value="'+esc(o[0])+'"'+(String(o[0])===String(cur)?' selected':'')+'>'+esc(o[1])+'</option>').join('');
+  const E=estimate(),row=E.rows.find(r=>r.id===id);
+  const tg=GRPS.find(g=>g[0]===tagGrp(it));
+  const info=it.noEst?'Сейчас исключён из оценки (кружок в «Тратах»).':row&&row.m>0?'Сейчас в оценке: ~'+money(row.m)+' в месяц ('+(row.src==='decl'?'по вашей частоте':'по истории')+').':'Пока в оценку не входит: мало истории и не задана частота'+(itemPrice(it)?'.':', а ещё нет цены.');
+  const body='<div class="form"><div class="s">'+info+'</div>'
+    +'<label class="field"><span>Как учитывать</span><select id="h-eg" class="inp">'+opts([['tag','По метке ('+(tg?tg[1].toLowerCase():'')+')']].concat(GRPS),it.eg||'tag')+'</select></label>'
+    +'<div class="row2"><label class="field"><span>Как часто покупаем</span><select id="h-fr" class="inp">'+opts([[0,'Не задано']].concat(FREQ),preset?fr:0)+'</select></label>'
+    +'<label class="field"><span>Или своё: раз в месяц</span><input id="h-frc" class="inp" type="text" inputmode="decimal" value="'+esc(fr>0&&!preset?fr:'')+'" placeholder="например 12" autocomplete="off"></label></div>'
+    +'<div class="row2"><label class="field"><span>Сколько берём за раз ('+esc(it.unit||'шт')+')</span><input id="h-fq" class="inp" type="text" inputmode="decimal" value="'+esc(it.fq||'')+'" placeholder="1" autocomplete="off"></label>'
+    +'<label class="field"><span>Откуда считать</span><select id="h-fm" class="inp">'+opts([['auto','Авто'],['hist','Только история'],['decl','Только моя частота']],it.fm||'auto')+'</select></label></div>'
+    +'<p class="s">«Авто»: история, если её достаточно (две недели и хотя бы три покупки), иначе ваша частота. Цена берётся из карточки товара или средняя по покупкам.</p>'
+    +'<div class="sec-h" style="margin-top:6px"><h3>История покупок</h3><span class="s">всего '+bs.length+', за 30 дней '+c30+'</span></div>'
+    +(bs.length?bs.slice(0,40).map(b=>'<div class="keyrow"><span>'+dshort(b.date)+' <span class="s">× '+nfm(b.qty)+(b.price?' по '+money(b.price):'')+'</span></span><span style="display:flex;gap:8px;align-items:center"><b class="num">'+money(b.sum)+'</b><button class="btn small" type="button" data-act="hist-del" data-b="'+esc(b.id)+'">Убрать</button></span></div>').join('')+(bs.length>40?'<div class="s">Показаны последние 40.</div>':''):'<div class="empty">Покупок пока нет.</div>')
+    +'<div class="lbl" style="margin-top:10px">Добавить покупки задним числом</div>'
+    +'<div class="row2"><label class="field"><span>Сколько раз</span><input id="h-n" class="inp" type="text" inputmode="numeric" placeholder="19" autocomplete="off"></label>'
+    +'<label class="field"><span>За какой срок</span><select id="h-p" class="inp">'+opts([[7,'за 7 дней'],[14,'за 14 дней'],[30,'за 30 дней'],[60,'за 60 дней']],30)+'</select></label></div>'
+    +'<label class="field"><span>Цена за единицу (необязательно)</span><input id="h-pr" class="inp" type="text" inputmode="decimal" placeholder="'+esc(itemPrice(it)||'')+'" autocomplete="off"></label>'
+    +'<div class="actions"><button class="btn" type="button" data-act="hist-add">Добавить</button>'+(bs.length?'<button class="btn danger" type="button" data-act="hist-clear">Стереть историю товара</button>':'')+'</div>'
+    +'<div class="err" id="h-err" role="alert"></div></div>';
+  openSheet(esc(dn(it)),body,'<div class="actions"><button class="btn" type="button" data-act="item" data-id="'+esc(id)+'">Карточка товара</button><span class="grow"></span><button class="btn" type="button" data-act="close">Закрыть</button><button class="btn primary" type="button" data-act="hist-save" data-primary="1">Сохранить</button></div>');
+}
+function histForm(){
+  const it=fs&&fs.id&&state.items.get(fs.id);if(!it||!$('#h-eg')) return null;
+  const num=v=>{v=String(v||'').trim();if(!v) return 0;const n=parseAmount(v);return isFinite(n)&&n>=0?n:0};
+  const c=num($('#h-frc').value),fr=c>0?c:num($('#h-fr').value);
+  return Object.assign({},it,{eg:$('#h-eg').value,freq:fr,fq:num($('#h-fq').value)||'',fm:$('#h-fm').value});
+}
+function histSave(){const o=histForm();if(!o) return;const it=state.items.get(o.id);if(JSON.stringify(o)!==JSON.stringify(it)) Persist.put('items',o)}
+function openEntry(eid){
+  const e=state.list.get(eid);if(!e) return;const it=state.items.get(e.itemId);if(!it) return;
+  fs={kind:'entry',id:eid};const P=prefs.prices,cur=entryStore(e,it),ch=cheapest(it);
+  const opts=sortedStores().map(st=>{const p=priceAt(it,st.id),has=it.prices&&st.id in it.prices;return '<option value="'+esc(st.id)+'"'+(st.id===cur?' selected':'')+'>'+esc(st.name)+(P&&has?' — '+money(p)+(ch&&ch.sid===st.id?' (дешевле всего)':''):'')+'</option>'}).join('');
+  openSheet(esc(dn(it)),'<div class="form"><div class="field"><span>Количество ('+esc(it.unit||'шт')+')</span><div class="stp"><button class="btn" type="button" data-act="qty-d" data-d="-1">−</button><input id="e-qty" class="inp" type="text" inputmode="decimal" value="'+esc(e.qty||1)+'"><button class="btn" type="button" data-act="qty-d" data-d="1">+</button></div></div>'
+    +'<label class="field"><span>Где покупаем</span><select id="e-store" class="inp"><option value="">Выбрать автоматически</option>'+opts+'</select></label>'
+    +(funnyOn()?'<p class="s">Обычное название: '+esc(it.name)+'</p>':'')+'<div class="err" id="e-err"></div></div>',
+    '<div class="actions"><button class="btn danger" type="button" data-act="entry-del">Убрать</button><button class="btn" type="button" data-act="item" data-id="'+esc(it.id)+'">Товар</button><span class="grow"></span><button class="btn primary" type="button" data-act="entry-save" data-primary="1">Готово</button></div>','e-qty');
+}
+function openPackForm(id,preItems){
+  const p=id?state.packs.get(id):null;
+  fs={kind:'pack',id:id||null,name:p?p.name:'',items:clone(p?p.items||[]:(preItems||[]))};
+  renderPackSheet();
+}
+function renderPackSheet(){
+  const rows=fs.items.map((x,i)=>{const it=state.items.get(x.id);return it?'<div class="row"><span style="flex:1;min-width:0;font-weight:600">'+esc(dn(it))+'</span><input class="inp" style="max-width:76px;text-align:center" type="text" inputmode="decimal" data-pq="'+i+'" value="'+esc(x.q||1)+'"><button class="icon-btn" type="button" data-act="pack-rm" data-i="'+i+'" aria-label="Убрать">'+ic('x')+'</button></div>':''}).join('')||'<div class="empty">Пока пусто. Добавьте товары ниже.</div>';
+  openSheet(fs.id?'Пак':'Новый пак','<div class="form"><label class="field"><span>Название пака</span><input id="p-name" class="inp" type="text" value="'+esc(fs.name)+'" autocomplete="off" placeholder="Завтрак"></label>'
+    +'<div>'+rows+'</div><div class="qadd"><input id="p-add" class="inp" list="dl-items2" placeholder="Добавить товар в пак" autocomplete="off"><button class="btn" type="button" data-act="pack-add-item">Добавить</button></div>'
+    +'<datalist id="dl-items2">'+[...state.items.values()].map(it=>'<option value="'+esc(dn(it))+'"></option>').join('')+'</datalist><div class="err" id="p-err"></div></div>',
+    '<div class="actions">'+(fs.id?'<button class="btn danger" type="button" data-act="pack-del">Удалить</button>':'')+(fs.id?'<button class="btn" type="button" data-act="pack-list-sheet">В список</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="pack-save" data-primary="1">Сохранить</button></div>','p-name');
+}
+function syncPackFields(){const n=$('#p-name');if(n) fs.name=n.value;document.querySelectorAll('[data-pq]').forEach(i=>{const q=parseAmount(i.value);fs.items[Number(i.dataset.pq)].q=isFinite(q)&&q>0?q:1})}
+function openBulkEdit(){
+  const s=state.settings;fs={kind:'bulk'};
+  openSheet('Выбрано товаров: '+ui.sel.size,'<div class="form"><p class="s">Меняются только те поля, где вы что-то выбрали.</p>'
+    +'<label class="field"><span>Категория</span><select id="b-cat" class="inp">'+optList(s.cats,'','Не менять')+'</select></label>'
+    +'<label class="field"><span>Метка</span><select id="b-tag" class="inp">'+optList(s.tags,'','Не менять')+'</select></label>'
+    +'<label class="field"><span>Где можем купить</span><select id="b-store" class="inp">'+optList(sortedStores(),'','Не менять')+'</select></label>'
+    +'<label class="field"><span>Цена в этом магазине (необязательно, для всех выбранных)</span><input id="b-price" class="inp" type="text" inputmode="decimal" placeholder="например 170" autocomplete="off"></label>'
+    +'<label class="check"><input id="b-main" type="checkbox"><span>Сделать этот магазин основным</span></label><div class="err" id="b-err"></div></div>',
+    '<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="bulk-save" data-primary="1">Применить</button></div>');
+}
+function openPickPack(){
+  const arr=[...state.packs.values()];
+  if(!arr.length) return toast('Паков пока нет. Создайте их во вкладке «Паки».');
+  fs={kind:'pick'};
+  openSheet('Добавить пак в список','<div class="form">'+arr.map(p=>'<button class="btn" type="button" data-act="pack-list" data-id="'+esc(p.id)+'" style="text-align:left">'+esc(p.name)+' <span class="s">· '+(p.items||[]).length+' товаров</span></button>').join('')+'</div>','');
+}
+function addPackToList(pid){
+  const p=state.packs.get(pid);if(!p) return;let n=0;
+  commit('Пак «'+p.name+'» добавлен в список',()=>(p.items||[]).forEach(x=>{if(state.items.has(x.id)){addToList(x.id,Number(x.q)||1);n++}}));
+  if(!n) toast('В паке нет доступных товаров');
+}
+function openHelp(){fs={kind:'help'};openSheet('Горячие клавиши','<div class="form"><div>'+ACTIONS.map(a=>'<div class="keyrow"><span>'+esc(a.label)+'</span><kbd>'+esc(comboLabel(keyOf(a)))+'</kbd></div>').join('')+'</div><p class="s">Изменить сочетания можно в «Ещё → Горячие клавиши».</p></div>','')}
+/* ---------- demo ---------- */
+function loadDemo(){
+  const S=[['Супермаг'],['Рынок'],['Пятёрочка']].map(x=>({id:uid(),name:x[0]}));
+  const mk=(name,funny,cat,tag,unit,have,min,prices)=>{const pr={};prices.forEach((p,i)=>{if(p) pr[S[i].id]=p});return {id:uid(),name,funny,cat,tag,unit,have,min,price:'',store:'',prices:pr}};
+  const I=[
+    mk('Хлеб',['хлиб','хлеп'],'Продукты','daily','шт',0,1,[52,45,49]),mk('Молоко',['молочко','млеко'],'Продукты','daily','л',1,2,[170,150,165]),
+    mk('Яйца',['яичечки'],'Продукты','daily','уп',0,1,[130,120,125]),mk('Макароны',['макарошки','мокорони'],'Продукты','planned','уп',2,2,[95,80,90]),
+    mk('Гречка',['грека'],'Продукты','planned','кг',1,1,[110,0,105]),mk('Сыр',['сырок'],'Продукты','wish','уп',0,0,[320,0,300]),
+    mk('Чипсы',['чипсяки','хрустяшки'],'Продукты','wish','уп',0,0,[110,0,99]),mk('Курица',['курочка'],'Продукты','planned','кг',0,1,[290,260,275]),
+    mk('Средство для мытья посуды',['фейри','пенка'],'Бытовая химия','must','шт',0,1,[140,0,129]),mk('Стиральный порошок',['порошок'],'Бытовая химия','planned','уп',1,1,[430,0,399]),
+    mk('Туалетная бумага',['бумажка','тубзик-рулон'],'Бытовая химия','must','уп',1,2,[260,0,240]),mk('Носки',['носочки'],'Одежда','unplanned','уп',0,0,[0,200,0]),
+    mk('Футболка',['тряпка'],'Одежда','wish','шт',0,0,[0,700,0]),mk('Сигареты',['сижки','дымок'],'Сигареты','daily','уп',1,2,[210,0,200])
+  ];
+  const P=[{id:uid(),name:'Завтрак',items:[{id:I[0].id,q:1},{id:I[1].id,q:1},{id:I[2].id,q:1}]},{id:uid(),name:'Уборка',items:[{id:I[8].id,q:1},{id:I[9].id,q:1},{id:I[10].id,q:1}]}];
+  commit('Пример загружен',()=>{
+    S.forEach(x=>Persist.put('stores',x));I.forEach(x=>Persist.put('items',x));P.forEach(x=>Persist.put('packs',x));
+    let seed=7;const rnd=()=>(seed=(seed*9301+49297)%233280)/233280;
+    const w=[9,8,5,3,3,1,2,3,3,2,3,1,1,8];
+    for(let d=0;d<80;d++){I.forEach((it,i)=>{if(rnd()<w[i]/30){const best=cheapest(it);Persist.put('buys',{id:uid(),entry:'',itemId:it.id,name:it.name,cat:it.cat,tag:it.tag,date:addD(todayISO(),-d),qty:1,price:best?best.p:0,sum:best?best.p:0,store:best?best.sid:''})}})}
+    addToList(I[0].id,1);addToList(I[1].id,2);addToList(I[3].id,1);addToList(I[8].id,1);
+  },{quiet:true});
+  toast('Пример загружен. Его можно удалить в «Ещё → Данные».');
+}
+/* ---------- export / import ---------- */
+async function doExport(){
+  const text=JSON.stringify({app:'moya-korzina',v:1,exportedAt:new Date().toISOString(),settings:state.settings,items:[...state.items.values()],packs:[...state.packs.values()],stores:[...state.stores.values()],list:[...state.list.values()],buys:[...state.buys.values()]},null,1);
+  const nm='moya-korzina-'+todayISO()+'.json';
+  try{const u=URL.createObjectURL(new Blob([text],{type:'application/json'}));const a=document.createElement('a');a.href=u;a.download=nm;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),3000);toast('Файл скачан');return}catch(e){}
+  copyText(text,'Не удалось скачать. Данные скопированы в буфер обмена.');
+}
+function readFileText(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result));r.onerror=()=>rej(r.error);r.readAsText(f)})}
+async function handleFile(f){
+  if(!f) return;let j;
+  try{j=JSON.parse(await readFileText(f))}catch(e){return toast('Файл не читается: это не JSON')}
+  if(!j||j.app!=='moya-korzina') return toast('Это не похоже на файл «Моей корзины»');
+  fs={kind:'import',j};
+  openSheet('Импорт из файла','<div class="form"><p class="s">В файле: товаров '+(j.items||[]).length+', паков '+(j.packs||[]).length+', магазинов '+(j.stores||[]).length+', покупок '+(j.buys||[]).length+'.</p><p class="s">«Добавить» объединит с текущими данными (одинаковые записи обновятся). «Заменить» удалит текущие.</p></div>',
+    '<div class="actions"><button class="btn danger" type="button" data-act="import-do" data-m="replace">Заменить всё</button><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="import-do" data-m="merge" data-primary="1">Добавить</button></div>');
+}
+function wipeAll(){KINDS.forEach(k=>[...state[k].keys()].forEach(id=>Persist.del(k,id)))}
+/* ---------- sync (Supabase, общий с «Моей кассой») ---------- */
+const SYNC_KEY='moya-korzina-sync';
+const Sync={cfg:null,m:{},last:0,busy:false,t:0,again:false,err:'',at:0,timers:false,bh:''};
+window.Sync=Sync;
+function h53(str){let h1=0xdeadbeef,h2=0x41c6ce57;for(let i=0;i<str.length;i++){const c=str.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677)}h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);return (4294967296*(2097151&h2)+(h1>>>0)).toString(36)}
+function syncLoad(){try{const j=JSON.parse(localStorage.getItem(SYNC_KEY)||'null');if(j&&j.cfg){Sync.cfg=j.cfg;Sync.m=j.m||{};Sync.last=j.last||0;Sync.bh=j.bh||''}}catch(e){}}
+function syncSave(){try{if(Sync.cfg) localStorage.setItem(SYNC_KEY,JSON.stringify({cfg:Sync.cfg,m:Sync.m,last:Sync.last,bh:Sync.bh}));else localStorage.removeItem(SYNC_KEY)}catch(e){}}
+function syncDocs(){
+  const out=new Map();out.set('sh:settings|s',{c:'sh:settings',i:'s',d:state.settings});
+  KINDS.forEach(k=>state[k].forEach(o=>out.set('sh:'+k+'|'+o.id,{c:'sh:'+k,i:o.id,d:o})));
+  return out;
+}
+function syncScan(){
+  if(!Sync.cfg) return;
+  const docs=syncDocs(),now=Date.now();let ch=false;
+  docs.forEach((v,k)=>{const hh=h53(JSON.stringify(v.d)),e=Sync.m[k];if(!e||e[0]!==hh||e[2]){Sync.m[k]=[hh,now,0,1];ch=true}});
+  for(const k in Sync.m){if(!docs.has(k)&&!Sync.m[k][2]){Sync.m[k]=[Sync.m[k][0],now,1,1];ch=true}}
+  if(ch||Sync.bh!==h53(JSON.stringify(shopSummary()))){syncSave();syncKick()}
+}
+function syncKick(){if(!Sync.cfg) return;if(Sync.busy){Sync.again=true;return}clearTimeout(Sync.t);Sync.t=setTimeout(syncRun,1200)}
+async function syncCall(fn,body){
+  const c=Sync.cfg,hd={'Content-Type':'application/json',apikey:c.k};
+  if(/^eyJ/.test(c.k)) hd.Authorization='Bearer '+c.k;
+  const r=await fetch(c.u.replace(/\/+$/,'')+'/rest/v1/rpc/'+fn,{method:'POST',headers:hd,body:JSON.stringify(body)});
+  if(!r.ok){let t='';try{const j=await r.json();t=j.message||j.hint||''}catch(e){}throw new Error(t||('Ошибка '+r.status))}
+  return r.json();
+}
+function syncApply(rows,quiet){
+  let touched=false;const maxS=rows.reduce((a,r)=>Math.max(a,r.s),Sync.last);
+  for(const r of rows){
+    if(r.c==='bridge'){if(r.i==='fin'){state.bridge=(r.x||!r.d)?null:Object.assign({},r.d,{u:r.u});touched=true}continue}
+    if(r.c.slice(0,3)!=='sh:') continue;
+    const kind=r.c.slice(3),k=r.c+'|'+r.i,e=Sync.m[k];
+    if(e&&e[1]>=r.u) continue;
+    if(kind==='settings'){if(!r.x&&r.d){state.settings=normSettings(r.d);Sync.m[k]=[h53(JSON.stringify(state.settings)),r.u,0,0];touched=true}continue}
+    if(KINDS.indexOf(kind)<0) continue;
+    touched=true;
+    if(r.x||!r.d){state[kind].delete(r.i);Sync.m[k]=['',r.u,1,0]}
+    else{const o=Object.assign({},r.d,{id:r.i});state[kind].set(r.i,o);Sync.m[k]=[h53(JSON.stringify(o)),r.u,0,0]}
+  }
+  Sync.last=maxS;
+  if(touched){persistLocal();if(!quiet){renderHeader();schedule()}}
+}
+async function syncRun(){
+  if(!Sync.cfg||Sync.busy) return;
+  clearTimeout(Sync.t);Sync.busy=true;Sync.err='';syncUI();
+  try{
+    const rows=await syncCall('kassa_pull',{p_room:Sync.cfg.r,p_since:Sync.last});
+    if(rows.length) syncApply(rows);
+    const keys=Object.keys(Sync.m).filter(k=>Sync.m[k][3]),docs=syncDocs();
+    for(let i=0;i<keys.length;i+=100){
+      const part=keys.slice(i,i+100),sent={};
+      const payload=part.map(k=>{const e=Sync.m[k],j=k.indexOf('|'),v=docs.get(k);sent[k]=e[1];return {c:k.slice(0,j),i:k.slice(j+1),d:e[2]?null:(v?v.d:null),u:e[1],x:!!e[2]}});
+      await syncCall('kassa_push',{p_room:Sync.cfg.r,p_rows:payload});
+      part.forEach(k=>{if(Sync.m[k]&&Sync.m[k][1]===sent[k]) Sync.m[k][3]=0});
+    }
+    const sum=shopSummary(),bh=h53(JSON.stringify(sum));
+    if(bh!==Sync.bh){const u=Date.now();await syncCall('kassa_push',{p_room:Sync.cfg.r,p_rows:[{c:'bridge',i:'shop',d:Object.assign({},sum,{u}),u,x:false}]});Sync.bh=bh}
+    Sync.at=Date.now();syncSave();
+  }catch(e){
+    Sync.err=(e&&e.message)||'нет соединения';
+    if(/Failed to fetch|NetworkError|Load failed/i.test(Sync.err)) Sync.err='нет соединения с интернетом';
+    else if(/Could not find the function|schema cache/i.test(Sync.err)) Sync.err='база не подготовлена. Выполните SQL из «Моей кассы» в Supabase';
+    else if(/Invalid API key|JWT/i.test(Sync.err)) Sync.err='неверный ключ';
+  }
+  Sync.busy=false;syncUI();
+  if(Sync.again){Sync.again=false;syncKick()}
+}
+function syncTimers(){
+  if(Sync.timers) return;Sync.timers=true;
+  setInterval(()=>{if(!document.hidden) syncRun()},20000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden) syncRun()});
+  window.addEventListener('online',()=>syncRun());
+}
+function syncUI(){if(ui.tab==='settings') schedule()}
+function syncInit(){syncLoad();if(Sync.cfg){syncTimers();syncScan();syncRun()}}
+function syncCode(c){return 'MK1.'+btoa(unescape(encodeURIComponent(JSON.stringify({u:c.u,k:c.k,r:c.r}))))}
+function syncParse(t){try{t=String(t||'').trim();if(!/^MK1\./.test(t)) return null;const j=JSON.parse(decodeURIComponent(escape(atob(t.slice(4)))));return j&&j.u&&j.k&&j.r&&String(j.r).length>=16?{u:String(j.u),k:String(j.k),r:String(j.r)}:null}catch(e){return null}}
+function syncCard(){
+  const hm=t=>new Date(t).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'});
+  let b;
+  if(Sync.cfg){
+    b='<div class="set-sec"><div class="sync-st'+(Sync.err?' bad':'')+'">'+(Sync.err?'Ошибка: '+esc(Sync.err):(Sync.busy?'Синхронизация…':'Подключено. '+(Sync.at?'Последняя синхронизация в '+hm(Sync.at)+'.':'Идёт первая синхронизация…')))+'</div>'
+      +'<p class="s">Изменения уходят в облако через секунду, чужие подтягиваются каждые 20 секунд и при открытии. Это то же облако, что у «Моей кассы», поэтому приложения видят друг друга.</p>'
+      +'<div class="actions"><button class="btn primary" type="button" data-act="sync-now">Синхронизировать сейчас</button><button class="btn" type="button" data-act="sync-code">Скопировать код</button><button class="btn danger" type="button" data-act="sync-off">Отключить</button></div></div>';
+  }else{
+    b='<div class="set-sec"><p class="s">Проще всего подключиться к тому же облаку, что и «Моя касса»: в кассе откройте «Ещё → Синхронизация», нажмите «Скопировать код» и вставьте его сюда. Так оба приложения смогут обмениваться данными.</p>'
+      +'<label class="field"><span>Код подключения</span><textarea id="sy-code" class="inp" style="min-height:64px" placeholder="MK1.…" autocomplete="off"></textarea></label>'
+      +'<div><button class="btn primary" type="button" data-act="sync-join">Подключиться</button></div>'
+      +(Sync.err?'<div class="sync-st bad">'+esc(Sync.err)+'</div>':'')+'</div>';
+  }
+  return fold('sync','Синхронизация между устройствами',b,Sync.cfg?(Sync.err?'ошибка':Sync.busy?'синхронизация…':Sync.at?'обновлено '+hm(Sync.at):'включена'):'выключена');
+}
+/* ---------- actions ---------- */
+const refreshCatalog=()=>{const c=$('#catlist');if(!c) return;c.innerHTML=catalogHTML();const n=$('#catcount');if(n) n.textContent='Найдено '+filtered().length+' из '+state.items.size};
+function quickAdd(){
+  const inp=$('#q-add');if(!inp) return;const v=inp.value.trim();if(!v) return;
+  let it=findItemByName(v);
+  commit(it?'Добавлено в список':'Новый товар и добавлено в список',()=>{
+    if(!it){it={id:uid(),name:v,funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}};Persist.put('items',it)}
+    addToList(it.id,1);
+  });
+  render(true);const n=$('#q-add');if(n) n.focus();
+}
+const act={
+  tab(el){setTab(el.dataset.t)},
+  close(){closeSheet()},
+  undo(){undo()},redo(){redo()},
+  fold(el){const id=el.dataset.id;prefs.open[id]=!prefs.open[id];savePrefs();render(true)},
+  add(){openItemForm(null)},
+  'q-add'(){quickAdd()},
+  'short-add'(){
+    const arr=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id));
+    if(!arr.length) return toast('Всё, что нужно держать дома, уже есть или в списке');
+    commit('Недостающее добавлено ('+arr.length+')',()=>arr.forEach(it=>addToList(it.id,Math.ceil(need(it)))));
+  },
+  'pick-pack'(){openPickPack()},
+  'pack-list'(el){closeSheet();addPackToList(el.dataset.id)},
+  'list-to-pack'(){
+    const its=entries().filter(e=>!e.done).map(e=>({id:e.itemId,q:Number(e.qty)||1}));
+    openPackForm(null,its);
+  },
+  'cheap-all'(){
+    commit('Выбраны самые дешёвые магазины',()=>entries().forEach(e=>{if(e.done) return;const c=cheapest(state.items.get(e.itemId));if(c&&e.store!==c.sid) Persist.put('list',Object.assign({},e,{store:c.sid}))}));
+  },
+  'clear-done'(){const d=entries().filter(e=>e.done);commit('Купленное убрано из списка',()=>d.forEach(e=>Persist.del('list',e.id)))},
+  group(el){ui.group=el.dataset.v;render(true)},
+  buy(el){const e=state.list.get(el.dataset.id);if(!e) return;
+    if(e.done) commit('Возвращено в список',()=>unbuyEntry(e));
+    else commit(e.got?'Отметка снята':'Отмечено',()=>Persist.put('list',Object.assign({},e,{got:!e.got})),{quiet:true})},
+  'got-all'(){commit('Всё отмечено',()=>entries().forEach(e=>{if(!e.done&&!e.got) Persist.put('list',Object.assign({},e,{got:true}))}),{quiet:true})},
+  finish(){openFinish()},
+  'finish-do'(){
+    const g=entries().filter(e=>!e.done&&e.got);if(!g.length){closeSheet();return}
+    const tot=g.reduce((s,e)=>s+(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId)),0);
+    closeSheet();commit('Покупки записаны: '+g.length,()=>g.forEach(e=>buyEntry(e)));openFinished(g.length,tot);
+  },
+  'copy-sum'(el){copyText(el.dataset.v,'Сумма скопирована')},
+  'item-hist'(el){closeSheet();openHist(el.dataset.id)},
+  'hist-save'(){commit('Частота и учёт товара сохранены',()=>histSave(),{quiet:true});closeSheet();render(true);toast('Сохранено')},
+  'hist-add'(){
+    const it=state.items.get(fs.id);if(!it) return;
+    const n=Math.round(Number(String($('#h-n').value).replace(',','.')));
+    if(!(n>=1&&n<=300)) return ($('#h-err').textContent='Укажите, сколько раз покупали (от 1 до 300).');
+    const days=Number($('#h-p').value)||30,pv=String($('#h-pr').value).trim(),pr=pv?parseAmount(pv):itemPrice(it);
+    if(!isFinite(pr)||pr<0) return ($('#h-err').textContent='Цена введена неверно.');
+    const id=fs.id;
+    commit('Добавлено покупок: '+n,()=>{histSave();const cur=state.items.get(id),q=Number(cur.fq)||1,today=todayISO();
+      for(let i=0;i<n;i++){const date=addD(today,-Math.round(i*(days-1)/Math.max(1,n-1)));Persist.put('buys',{id:uid(),entry:'',itemId:id,name:cur.name,cat:cur.cat||'',tag:cur.tag||'',date,qty:q,price:pr,sum:r2(q*pr),store:''})}},{quiet:true});
+    render(true);openHist(id);toast('Добавлено покупок: '+n);
+  },
+  'hist-del'(el){const id=fs.id,b=el.dataset.b;commit('Покупка убрана',()=>{histSave();Persist.del('buys',b)},{quiet:true});render(true);openHist(id)},
+  'hist-clear'(el){twoStep(el,'Точно стереть?',()=>{const id=fs.id;commit('История товара стёрта',()=>{histSave();[...state.buys.values()].forEach(b=>{if(b.itemId===id) Persist.del('buys',b.id)})});render(true);openHist(id)})},
+  'buys-clear'(el){twoStep(el,'Точно стереть?',()=>{const d=el.dataset.d,from=d==='all'?'':addD(todayISO(),-(Number(d)-1));commit('История покупок стёрта',()=>{[...state.buys.values()].forEach(b=>{if(!from||b.date>=from) Persist.del('buys',b.id)})});render(true)})},
+  entry(el){openEntry(el.dataset.id)},
+  'qty-d'(el){const i=$('#e-qty'),v=parseAmount(i.value),n=Math.max(0.1,(isFinite(v)?v:1)+Number(el.dataset.d));i.value=r2(n)},
+  'entry-save'(){
+    const e=state.list.get(fs.id);if(!e) return closeSheet();
+    const q=parseAmount($('#e-qty').value);if(!isFinite(q)||q<=0) return ($('#e-err').textContent='Введите количество больше нуля.');
+    const sid=$('#e-store').value;closeSheet();commit('Запись изменена',()=>Persist.put('list',Object.assign({},e,{qty:q,store:sid})),{quiet:true});
+  },
+  'entry-del'(){const id=fs.id;closeSheet();commit('Убрано из списка',()=>Persist.del('list',id))},
+  item(el){closeSheet();openItemForm(el.dataset.id)},
+  'item-save'(){saveItem()},
+  'item-del'(){const id=fs.id,it=state.items.get(id);if(!it) return;closeSheet();commit('Товар удалён',()=>{[...state.list.values()].forEach(e=>{if(e.itemId===id) Persist.del('list',e.id)});[...state.packs.values()].forEach(p=>{if((p.items||[]).some(x=>x.id===id)) Persist.put('packs',Object.assign({},p,{items:p.items.filter(x=>x.id!==id)}))});Persist.del('items',id)})},
+  'to-list'(el){const id=el.dataset.id,e=inList(id);commit(e?'Убрано из списка':'Добавлено в список',()=>e?Persist.del('list',e.id):addToList(id,1))},
+  sel(el){const id=el.dataset.id;if(ui.sel.has(id)) ui.sel.delete(id);else ui.sel.add(id);render(true)},
+  'sel-mode'(){ui.selMode=!ui.selMode;ui.sel.clear();render(true)},
+  'sel-all'(){filtered().forEach(it=>ui.sel.add(it.id));render(true)},
+  'sel-none'(){ui.sel.clear();render(true)},
+  'bulk-list'(){const ids=[...ui.sel];commit('В список добавлено: '+ids.length,()=>ids.forEach(id=>addToList(id,1)));ui.sel.clear();ui.selMode=false;render(true)},
+  'bulk-edit'(){openBulkEdit()},
+  'bulk-save'(){
+    const cat=$('#b-cat').value,tag=$('#b-tag').value,sid=$('#b-store').value,pv=$('#b-price').value.trim(),main=$('#b-main').checked;
+    let price=0;if(pv){price=parseAmount(pv);if(!isFinite(price)||price<=0) return ($('#b-err').textContent='Цена введена неверно.')}
+    if(!cat&&!tag&&!sid) return ($('#b-err').textContent='Выберите хотя бы одно изменение.');
+    const ids=[...ui.sel];closeSheet();
+    commit('Изменено товаров: '+ids.length,()=>ids.forEach(id=>{
+      const it=state.items.get(id);if(!it) return;const n=Object.assign({},it);
+      if(cat) n.cat=cat;if(tag) n.tag=tag;
+      if(sid){n.prices=Object.assign({},it.prices||{});if(price>0) n.prices[sid]=price;else if(!(sid in n.prices)) n.prices[sid]=0;if(main) n.store=sid}
+      Persist.put('items',n);
+    }));
+    ui.sel.clear();ui.selMode=false;render(true);
+  },
+  'bulk-pack'(){openPackForm(null,[...ui.sel].map(id=>({id,q:1})))},
+  'bulk-del'(el){twoStep(el,'Точно удалить?',()=>{const ids=[...ui.sel];commit('Удалено товаров: '+ids.length,()=>ids.forEach(id=>{[...state.list.values()].forEach(e=>{if(e.itemId===id) Persist.del('list',e.id)});Persist.del('items',id)}));ui.sel.clear();ui.selMode=false;render(true)})},
+  'f-cat'(el){ui.cat=el.dataset.v;ui.limit=100;render(true)},'f-tag'(el){ui.tag=el.dataset.v;ui.limit=100;render(true)},
+  'f-store'(el){ui.store=el.dataset.v;ui.limit=100;render(true)},'f-only'(el){ui.only=el.dataset.v;ui.limit=100;render(true)},
+  'f-sort'(el){ui.sort=el.dataset.v;render(true)},
+  'est-toggle'(el){const it=state.items.get(el.dataset.id);if(!it) return;commit(it.noEst?'Товар снова учитывается':'Товар не учитывается в оценке',()=>Persist.put('items',Object.assign({},it,{noEst:!it.noEst})),{quiet:true})},
+  cut(el){const id=el.dataset.id;commit('Убрано из списка',()=>Persist.del('list',id))},
+  'cut-all'(el){const ids=String(el.dataset.ids||'').split(',').filter(Boolean);commit('Убрано из списка: '+ids.length,()=>ids.forEach(id=>Persist.del('list',id)))},
+  more(){ui.limit+=100;refreshCatalog()},
+  'pack-new'(){openPackForm(null)},
+  pack(el){openPackForm(el.dataset.id)},
+  'pack-add-item'(){
+    syncPackFields();const v=$('#p-add').value.trim();if(!v) return;
+    const it=findItemByName(v);if(!it){fs.name=fs.name;renderPackSheet();return toast('Такого товара нет. Сначала добавьте его во вкладке «Товары».')}
+    const ex=fs.items.find(x=>x.id===it.id);if(ex) ex.q=(Number(ex.q)||1)+1;else fs.items.push({id:it.id,q:1});
+    renderPackSheet();const a=$('#p-add');if(a) a.focus();
+  },
+  'pack-rm'(el){syncPackFields();fs.items.splice(Number(el.dataset.i),1);renderPackSheet()},
+  'pack-save'(){
+    syncPackFields();const name=fs.name.trim();if(!name) return ($('#p-err').textContent='Введите название пака.');
+    const old=fs.id?state.packs.get(fs.id):null,o={id:old?old.id:uid(),name,items:fs.items.filter(x=>state.items.has(x.id))};
+    closeSheet();commit(old?'Пак изменён':'Пак создан',()=>Persist.put('packs',o));
+  },
+  'pack-del'(el){twoStep(el,'Точно удалить?',()=>{const id=fs.id;closeSheet();commit('Пак удалён',()=>Persist.del('packs',id))})},
+  'pack-list-sheet'(){syncPackFields();const id=fs.id;closeSheet();addPackToList(id)},
+  't-period'(el){ui.period=el.dataset.v;render(true)},'t-metric'(el){ui.metric=el.dataset.v;render(true)},
+  mode(el){commit('Названия: '+MODES.find(m=>m[0]===el.dataset.v)[1],()=>Persist.settings(s=>{s.nameMode=el.dataset.v}),{quiet:true});render(true)},
+  'names-toggle'(){
+    const cur=state.settings.nameMode;
+    commit(cur==='normal'?'Смешные названия':'Обычные названия',()=>Persist.settings(s=>{s.nameMode=cur==='normal'?(prefs.lastFunny||'f0'):'normal';if(cur!=='normal') prefs.lastFunny=cur}),{quiet:true});
+    toast(state.settings.nameMode==='normal'?'Обычные названия':'Смешные названия');render(true);
+  },
+  'price-toggle'(){prefs.prices=!prefs.prices;savePrefs();toast(prefs.prices?'Цены показаны':'Цены скрыты');render(true)},
+  'cat-add'(){const i=$('#cat-add'),v=i.value.trim();if(!v) return;if(state.settings.cats.includes(v)) return toast('Такая категория уже есть');commit('Категория добавлена',()=>Persist.settings(s=>{s.cats.push(v)}),{quiet:true});render(true);const n=$('#cat-add');if(n) n.focus()},
+  'cat-del'(el){const n=el.dataset.n;commit('Категория удалена',()=>Persist.settings(s=>{s.cats=s.cats.filter(c=>c!==n)}),{quiet:true});if(ui.cat===n) ui.cat='';render(true)},
+  'tag-add'(){const i=$('#tag-add'),v=i.value.trim();if(!v) return;commit('Метка добавлена',()=>Persist.settings(s=>{s.tags.push({id:uid(),name:v,c:s.tags.length%6})}),{quiet:true});render(true);const n=$('#tag-add');if(n) n.focus()},
+  'tag-del'(el){const id=el.dataset.id;if(state.settings.tags.length<2) return toast('Нужна хотя бы одна метка');commit('Метка удалена',()=>Persist.settings(s=>{s.tags=s.tags.filter(t=>t.id!==id)}),{quiet:true});if(ui.tag===id) ui.tag='';render(true)},
+  'store-add'(){const i=$('#store-add'),v=i.value.trim();if(!v) return;if([...state.stores.values()].some(s=>norm(s.name)===norm(v))) return toast('Такой магазин уже есть');commit('Магазин добавлен',()=>Persist.put('stores',{id:uid(),name:v}),{quiet:true});render(true);const n=$('#store-add');if(n) n.focus()},
+  'store-del'(el){const id=el.dataset.id;commit('Магазин удалён',()=>{[...state.items.values()].forEach(it=>{if((it.prices&&id in it.prices)||it.store===id){const n=Object.assign({},it,{prices:Object.assign({},it.prices||{}),store:it.store===id?'':it.store});delete n.prices[id];Persist.put('items',n)}});[...state.list.values()].forEach(e=>{if(e.store===id) Persist.put('list',Object.assign({},e,{store:''}))});Persist.del('stores',id)});if(ui.store===id) ui.store='';render(true)},
+  'key-set'(el){ui.capturing=ui.capturing===el.dataset.id?null:el.dataset.id;render(true)},
+  'keys-reset'(){prefs.keys={};savePrefs();toast('Горячие клавиши сброшены');render(true)},
+  export(){doExport()},
+  'pick-file'(){$('#imp-file').click()},
+  'import-do'(el){
+    const j=fs&&fs.j;if(!j) return;const replace=el.dataset.m==='replace';closeSheet();
+    commit(replace?'Данные заменены':'Данные добавлены',()=>{
+      if(replace) wipeAll();
+      if(j.settings) Persist.settings(s=>Object.assign(s,normSettings(j.settings)));
+      KINDS.forEach(k=>(j[k]||[]).filter(o=>o&&o.id).forEach(o=>Persist.put(k,o)));
+    },{quiet:true});
+    toast('Импорт завершён');render(true);
+  },
+  demo(){loadDemo()},
+  wipe(el){twoStep(el,'Точно удалить всё?',()=>{commit('Все данные удалены',()=>wipeAll());render(true)})},
+  help(){openHelp()},
+  async 'sync-join'(){
+    const c=syncParse($('#sy-code').value);if(!c) return toast('Код не распознан. Скопируйте его целиком в «Моей кассе».');
+    const prev=Sync.cfg;Sync.cfg=c;let rows;
+    try{rows=await syncCall('kassa_pull',{p_room:c.r,p_since:0})}catch(e){Sync.cfg=prev;return toast('Не получилось: '+((e&&e.message)||'нет соединения'))}
+    Sync.m={};Sync.last=0;
+    if(!state.items.size&&!state.packs.size&&!state.list.size&&!state.stores.size) syncDocs().forEach((v,k)=>{Sync.m[k]=[h53(JSON.stringify(v.d)),0,0,0]});
+    syncApply(rows,true);Sync.err='';syncSave();syncTimers();flushLocal();toast('Подключено');render(true);syncRun();
+  },
+  'sync-now'(){syncRun()},
+  'sync-code'(){copyText(syncCode(Sync.cfg),'Код скопирован')},
+  'sync-off'(el){twoStep(el,'Отключить? Данные останутся здесь и в облаке',()=>{Sync.cfg=null;Sync.m={};Sync.last=0;Sync.err='';clearTimeout(Sync.t);syncSave();toast('Синхронизация отключена');render(true)})}
+};
+/* ---------- events ---------- */
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled) return;const f=act[el.dataset.act];if(f) f(el,e)});
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(t.id==='q'){ui.q=t.value;ui.limit=100;refreshCatalog()}
+});
+document.addEventListener('change',e=>{
+  const el=e.target;
+  if(el.id==='imp-file'){const f=el.files&&el.files[0];el.value='';handleFile(f);return}
+  if(el.dataset&&el.dataset.sn){const v=el.value.trim(),s=state.stores.get(el.dataset.sn);if(s&&v&&v!==s.name) commit('Магазин переименован',()=>Persist.put('stores',Object.assign({},s,{name:v})),{quiet:true});else if(s) el.value=s.name;return}
+  if(el.dataset&&el.dataset.tg){const id=el.dataset.tg,v=el.value;commit('Метка изменена',()=>Persist.settings(s=>{const t=s.tags.find(x=>x.id===id);if(t) t.grp=v}),{quiet:true});syncKick();return}
+  if(el.dataset&&el.dataset.set){
+    const k=el.dataset.set;let v=el.type==='checkbox'?el.checked:el.value;
+    if(k==='budget'||k==='manualEss'||k==='manualWish'){v=String(v).trim()===''?0:parseAmount(v);if(!isFinite(v)||v<0){toast('Сумма введена неверно');v=0}}
+    commit('Настройки изменены',()=>Persist.settings(s=>{s[k]=v}),{quiet:true});
+    if(k==='toFin'||k==='useFin'||k==='manualEss'||k==='manualWish'||k==='manualFirst') syncKick();
+    render(true);
+  }
+});
+/* ---------- keyboard ---------- */
+document.addEventListener('keydown',e=>{
+  if(ui.capturing){
+    e.preventDefault();e.stopPropagation();
+    if(e.code==='Escape'){ui.capturing=null;render(true);return}
+    const c=comboFromEvent(e);if(!c) return;
+    const cur2=ACTIONS.find(x=>x.id===ui.capturing),ctx=cur2.ctx||'page';
+    const other=ACTIONS.find(a=>a.id!==ui.capturing&&(a.ctx||'page')===ctx&&keyOf(a)===c);
+    if(other){toast('Это сочетание занято: '+other.label);return}
+    if(c===cur2.def) delete prefs.keys[cur2.id];else prefs.keys[cur2.id]=c;
+    savePrefs();ui.capturing=null;toast('Сохранено: '+comboLabel(c));render(true);return;
+  }
+  const modalOpen=!$('#modal').hidden,t=e.target,tag=(t&&t.tagName)||'';
+  const inField=t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(tag));
+  const c=comboFromEvent(e);
+  if(modalOpen){
+    if(e.key==='Escape'){closeSheet();return}
+    const prim=$('#sheet [data-primary]');
+    const saveKey=c&&ACTIONS.some(a=>a.ctx==='modal'&&keyOf(a)===c)&&!/^(BUTTON|TEXTAREA|A)$/.test(tag);
+    if(prim&&(c==='Ctrl+Enter'||saveKey)){e.preventDefault();prim.click()}
+    return;
+  }
+  if(e.key==='Enter'&&t&&t.id==='q-add'){e.preventDefault();quickAdd();return}
+  if(e.key==='Enter'&&t&&/^(cat|tag|store)-add$/.test(t.id||'')){e.preventDefault();const b=t.parentNode.querySelector('[data-act$="-add"]');if(b) b.click();return}
+  if(e.key==='Escape'&&inField&&t.id==='q'){t.blur();return}
+  if(inField||!c) return;
+  if((c==='Enter'||c==='Space')&&/^(BUTTON|A|SUMMARY)$/.test(tag)) return;
+  const a=ACTIONS.find(x=>(x.ctx||'page')==='page'&&keyOf(x)===c);if(!a) return;
+  e.preventDefault();
+  if(a.tab) return setTab(a.tab);
+  const run={
+    add:()=>act.add(),quick:()=>{setTab('list');setTimeout(()=>{const i=$('#q-add');if(i) i.focus()},30)},
+    search:()=>{setTab('items');setTimeout(()=>{const i=$('#q');if(i) i.focus()},30)},
+    undo,redo,prices:()=>act['price-toggle'](),names:()=>act['names-toggle'](),
+    selmode:()=>{setTab('items');act['sel-mode']()},selall:()=>{if(ui.tab==='items'){ui.selMode=true;act['sel-all']()}},
+    short:()=>act['short-add'](),clear:()=>act['clear-done'](),export:()=>doExport(),import:()=>$('#imp-file').click(),help:()=>openHelp(),
+    tabPrev:()=>setTab(TABS[(TABS.indexOf(ui.tab)+TABS.length-1)%TABS.length]),tabNext:()=>setTab(TABS[(TABS.indexOf(ui.tab)+1)%TABS.length])
+  };
+  (run[a.id]||(()=>{}))();
+});
+/* drag and drop import */
+(function(){
+  let depth=0;const ov=$('#dropall');
+  const hasFiles=e=>e.dataTransfer&&[...(e.dataTransfer.types||[])].indexOf('Files')>=0;
+  window.addEventListener('dragenter',e=>{if(!hasFiles(e)) return;e.preventDefault();depth++;ov.hidden=false});
+  window.addEventListener('dragover',e=>{if(!hasFiles(e)) return;e.preventDefault()});
+  window.addEventListener('dragleave',e=>{if(!hasFiles(e)) return;depth=Math.max(0,depth-1);if(!depth) ov.hidden=true});
+  window.addEventListener('drop',e=>{if(!hasFiles(e)) return;e.preventDefault();depth=0;ov.hidden=true;const f=e.dataTransfer.files&&e.dataTransfer.files[0];handleFile(f)});
+})();
+loadPrefs();loadLocal();syncInit();render();
+
+})();
+</script>
+<script>if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})})}</script>
+</body>
+</html>
