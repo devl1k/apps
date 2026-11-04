@@ -650,8 +650,9 @@ function syncCard(){
   let b;
   if(Sync.cfg){
     b='<div class="set-sec"><div class="sync-st'+(Sync.err?' bad':'')+'">'+(Sync.err?'Ошибка: '+esc(Sync.err):(Sync.busy?'Синхронизация…':'Подключено. '+(Sync.at?'Последняя синхронизация в '+new Date(Sync.at).toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'})+'.':'Первая синхронизация идёт…')))+'</div>'
+      +'<p class="s">Ждёт отправки: '+Object.keys(Sync.m).filter(k=>Sync.m[k][3]).length+'. Время на этом устройстве: '+new Date().toLocaleTimeString('ru')+'. Если оно сильно отличается от настоящего, правки с этого устройства могут проигрывать правкам с других. Включите автоматическое время в настройках телефона.</p>'
       +'<p class="s">Изменения отправляются сами через секунду после правки, а новые подтягиваются каждые 20 секунд и когда вы открываете приложение. Без интернета всё работает и досинхронизируется позже.</p>'
-      +'<div class="actions"><button class="btn primary" type="button" data-act="sync-now">Синхронизировать сейчас</button><button class="btn" type="button" data-act="sync-code">Скопировать код для другого устройства</button><button class="btn danger" type="button" data-act="sync-off">Отключить</button></div></div>';
+      +'<div class="actions"><button class="btn primary" type="button" data-act="sync-now">Синхронизировать сейчас</button><button class="btn" type="button" data-act="sync-force">Отправить всё с этого устройства</button><button class="btn" type="button" data-act="sync-code">Скопировать код для другого устройства</button><button class="btn danger" type="button" data-act="sync-off">Отключить</button></div></div>';
   }else{
     b='<div class="set-sec"><p class="s">Данные хранятся в вашем облаке Supabase, поэтому у каждого на телефоне и компьютере своё приложение, а данные общие. Сначала один раз подготовьте базу: кнопка ниже копирует текст, его нужно вставить в Supabase → SQL Editor → Run.</p>'
       +'<div class="actions"><button class="btn" type="button" data-act="sync-sql">Скопировать SQL для Supabase</button></div>'
@@ -667,6 +668,7 @@ function syncCard(){
   return fold('sync','Синхронизация между устройствами',b,syncStatusTxt());
 }
 const SYNC_ACT={
+  'sync-force'(){if(!Sync.cfg) return;const now=Date.now();syncScan();Object.keys(Sync.m).forEach(k=>{Sync.m[k][1]=now;Sync.m[k][3]=1});Sync.bf='';syncSave();toast('Отправляю всё с этого устройства…');syncRun()},
   async 'sync-on'(){
     const u=($('#sy-url').value||'').trim().replace(/\/+$/,''),k=($('#sy-key').value||'').trim();
     if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(u)) return toast('Адрес должен выглядеть как https://xxxx.supabase.co');

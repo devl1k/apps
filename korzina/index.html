@@ -1179,8 +1179,9 @@ function syncCard(){
   let b;
   if(Sync.cfg){
     b='<div class="set-sec"><div class="sync-st'+(Sync.err?' bad':'')+'">'+(Sync.err?'Ошибка: '+esc(Sync.err):(Sync.busy?'Синхронизация…':'Подключено. '+(Sync.at?'Последняя синхронизация в '+hm(Sync.at)+'.':'Идёт первая синхронизация…')))+'</div>'
+      +'<p class="s">Ждёт отправки: '+Object.keys(Sync.m).filter(k=>Sync.m[k][3]).length+'. Время на этом устройстве: '+new Date().toLocaleTimeString('ru')+'. Если оно сильно отличается от настоящего, правки с этого устройства могут проигрывать правкам с других. Включите автоматическое время в настройках телефона.</p>'
       +'<p class="s">Изменения уходят в облако через секунду, чужие подтягиваются каждые 20 секунд и при открытии. Это то же облако, что у «Моей кассы», поэтому приложения видят друг друга.</p>'
-      +'<div class="actions"><button class="btn primary" type="button" data-act="sync-now">Синхронизировать сейчас</button><button class="btn" type="button" data-act="sync-code">Скопировать код</button><button class="btn danger" type="button" data-act="sync-off">Отключить</button></div></div>';
+      +'<div class="actions"><button class="btn primary" type="button" data-act="sync-now">Синхронизировать сейчас</button><button class="btn" type="button" data-act="sync-force">Отправить всё с этого устройства</button><button class="btn" type="button" data-act="sync-code">Скопировать код</button><button class="btn danger" type="button" data-act="sync-off">Отключить</button></div></div>';
   }else{
     b='<div class="set-sec"><p class="s">Проще всего подключиться к тому же облаку, что и «Моя касса»: в кассе откройте «Ещё → Синхронизация», нажмите «Скопировать код» и вставьте его сюда. Так оба приложения смогут обмениваться данными.</p>'
       +'<label class="field"><span>Код подключения</span><textarea id="sy-code" class="inp" style="min-height:64px" placeholder="MK1.…" autocomplete="off"></textarea></label>'
@@ -1345,6 +1346,7 @@ const act={
     syncApply(rows,true);Sync.err='';syncSave();syncTimers();flushLocal();toast('Подключено');render(true);syncRun();
   },
   'sync-now'(){syncRun()},
+  'sync-force'(){if(!Sync.cfg) return;const now=Date.now();syncScan();Object.keys(Sync.m).forEach(k=>{Sync.m[k][1]=now;Sync.m[k][3]=1});Sync.bh='';syncSave();toast('Отправляю всё с этого устройства…');syncRun()},
   'sync-code'(){copyText(syncCode(Sync.cfg),'Код скопирован')},
   'sync-off'(el){twoStep(el,'Отключить? Данные останутся здесь и в облаке',()=>{Sync.cfg=null;Sync.m={};Sync.last=0;Sync.err='';clearTimeout(Sync.t);syncSave();toast('Синхронизация отключена');render(true)})}
 };
