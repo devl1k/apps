@@ -1,6 +1,6 @@
 {
- "name": "Моя касса",
- "short_name": "Касса",
+ "name": "Финансы",
+ "short_name": "Финансы",
  "start_url": "./",
  "scope": "./",
  "display": "standalone",
