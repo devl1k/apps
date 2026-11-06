@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Моя корзина</title>
+<title>Корзина</title>
 <meta name="theme-color" content="#3B4FD8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -325,6 +325,18 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
 .barrow2:first-of-type{border-top:0}.barrow2 .bl{display:flex;flex-direction:column;min-width:0}.barrow2 .bl b{overflow-wrap:anywhere;font-weight:600}
 .row.got .t{text-decoration:line-through;opacity:.65}
 .finish .btn[disabled]{opacity:.5}
+
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;margin-top:10px}
+.tile{appearance:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:92px;padding:10px 6px;border:1px solid var(--line);background:var(--surface);border-radius:16px;color:var(--ink);cursor:pointer;text-align:center;font-family:inherit}
+.tile:active{transform:scale(.97)}.tile .te{font-size:30px;line-height:1.1}.tile .tn{font-size:13px;font-weight:700;line-height:1.2}.tile .tc{font-size:11px;color:var(--muted)}
+.tile.add{border-style:dashed;color:var(--muted)}.tile .tx2{position:absolute;top:6px;right:8px;font-size:12px;color:var(--accent)}
+.seg.wrap{flex-wrap:wrap}.seg.wrap button{flex:1 1 22%}
+.chipbar{touch-action:pan-x pan-y;overscroll-behavior-x:contain}
+.tiles.c1 .tile{flex-direction:row;justify-content:flex-start;gap:12px;min-height:56px;padding:8px 14px;text-align:left}.tiles.c1 .tile .tn{flex:1}.tiles.dense .tile{min-height:76px;padding:8px 4px}.tiles.dense .te{font-size:24px}.tiles.dense .tn{font-size:11px}
+.tile .tn{overflow-wrap:anywhere}.tile .tno{position:absolute;top:5px;left:8px;font-size:11px;font-weight:700;color:var(--accent)}
+.altchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.altchips:empty{display:none}
+.altchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 4px 4px 12px;font-size:13px;font-weight:600}
+.altchip button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;width:24px;height:24px;border-radius:50%;cursor:pointer}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4FD1A0">
@@ -335,10 +347,11 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
 <body>
 <div class="app">
   <header class="top">
-    <div class="pbtn" style="cursor:default"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/></svg><span>Моя корзина</span></div>
+    <div class="pbtn" style="cursor:default"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/></svg><span>Корзина</span></div>
     <div class="r">
       <button class="icon-btn" id="b-undo" data-act="undo" type="button" aria-label="Отменить действие" title="Отменить действие" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
-      <button class="icon-btn" id="b-names" data-act="names-toggle" type="button" aria-label="Смешные названия" title="Смешные названия"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/></svg></button>
+      <button class="icon-btn" id="b-redo" data-act="redo" type="button" aria-label="Вернуть действие" title="Вернуть действие" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
+      <button class="icon-btn" id="b-names" data-act="names-toggle" type="button" aria-label="Альт. названия" title="Альт. названия"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9.5h.01M15 9.5h.01"/></svg></button>
       <button class="icon-btn" id="b-prices" data-act="price-toggle" type="button" aria-label="Показывать цены" title="Показывать цены"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg></button>
     </div>
   </header>
@@ -346,7 +359,7 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
 </div>
 <nav class="nav" id="nav"><div class="nav-in" style="grid-template-columns:repeat(6,minmax(0,1fr))"><button data-act="tab" data-t="list" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/></svg>Список</button><button data-act="tab" data-t="items" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/></svg>Товары</button><button data-act="tab" data-t="packs" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M4 6h12M4 12h12M4 18h8"/><path d="M19 15v6l-3-2z"/></svg>Паки</button><button data-act="tab" data-t="spend" type="button"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1.1 1.7 2.5 2 2.5.8 2.5 2-1.1 2-2.5 2A2.5 2 0 0 1 9.5 15M12 6v1.5M12 16.5V18"/></svg>Траты</button><button data-act="tab" data-t="tier" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6M2 20h20"/></svg>Статистика</button><button data-act="tab" data-t="settings" type="button"><svg class="ic" viewBox="0 0 24 24"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg>Ещё</button></div></nav>
 <button class="fab" id="fab" data-act="add" type="button" aria-label="Новый товар"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-<div class="modal" id="modal" hidden><div class="backdrop" data-act="close"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="sheet-h" id="sheet-h"></div><div class="sheet-b" id="sheet-b"></div><div class="sheet-f" id="sheet-f"></div></div></div>
+<div class="modal" id="modal" hidden><div class="backdrop" data-act="backdrop"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="sheet-h" id="sheet-h"></div><div class="sheet-b" id="sheet-b"></div><div class="sheet-f" id="sheet-f"></div></div></div>
 <div class="toast" id="toast" role="status" hidden></div>
 <div class="dropall" id="dropall" hidden>Отпустите файл, чтобы импортировать</div>
 <input type="file" id="imp-file" accept=".json,application/json" hidden>
@@ -401,13 +414,57 @@ function toast(msg,o){
   t.innerHTML='<span>'+esc(msg)+'</span>'+(o&&o.undo?'<button type="button" data-act="undo">Отменить</button>':'')+(o&&o.redo?'<button type="button" data-act="redo">Вернуть</button>':'');
   t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>{t.hidden=true},(o&&(o.undo||o.redo))?7000:3200);
 }
+let Draft=null,histDepth=0,histBusy=false,histT=0;
+const DRAFT_KINDS=['item','entry','pack','hist','cat','profile','op','rec','debt','sched','pay','occ','debt-pay'];
+const fsKey=()=>fs&&DRAFT_KINDS.indexOf(fs.kind)>=0?fs.kind+':'+(fs.id||fs.key||('new'+(fs.type||fs.dir||''))):'';
 function openSheet(title,body,bar,focusId){
+  const key=fsKey();
   $('#sheet-h').innerHTML='<h2 id="sheet-title">'+title+'</h2><button class="icon-btn" type="button" data-act="close" aria-label="Закрыть">'+ic('x')+'</button>';
   $('#sheet-b').innerHTML=body;$('#sheet-f').innerHTML=bar||'';$('#sheet-b').scrollTop=0;
+  if(Draft){
+    if(key&&Draft.key===key){
+      $('#sheet-h').innerHTML=Draft.title;$('#sheet-b').innerHTML=Draft.body;$('#sheet-f').innerHTML=Draft.bar;
+      try{Object.assign(fs,JSON.parse(Draft.fs))}catch(e){}
+    }
+    Draft=null;
+  }
   $('#modal').hidden=false;
+  reconcileHist();
   const f=focusId&&$('#'+focusId);if(f&&!matchMedia('(pointer:coarse)').matches) setTimeout(()=>f.focus(),30);
 }
-function closeSheet(){$('#modal').hidden=true;$('#sheet-b').innerHTML='';$('#sheet-f').innerHTML='';fs=null}
+function serializeSheet(){
+  const b=$('#sheet-b');
+  b.querySelectorAll('input,textarea,select').forEach(el=>{
+    if(el.tagName==='SELECT'){[...el.options].forEach(o=>{if(o.selected) o.setAttribute('selected','');else o.removeAttribute('selected')})}
+    else if(el.tagName==='TEXTAREA') el.textContent=el.value;
+    else if(el.type==='checkbox'||el.type==='radio'){if(el.checked) el.setAttribute('checked','');else el.removeAttribute('checked')}
+    else el.setAttribute('value',el.value);
+  });
+  return b.innerHTML;
+}
+function hideSheet(){
+  if($('#modal').hidden) return;
+  const k=fsKey();
+  if(k&&$('#sheet-b').querySelector('input,textarea,select')){
+    try{Draft={key:k,title:$('#sheet-h').innerHTML,body:serializeSheet(),bar:$('#sheet-f').innerHTML,fs:JSON.stringify(fs)}}catch(e){Draft=null}
+  }
+  const d=Draft;closeSheet(true);Draft=d;
+}
+function closeSheet(keep){
+  $('#modal').hidden=true;$('#sheet-b').innerHTML='';$('#sheet-f').innerHTML='';fs=null;if(!keep) Draft=null;
+  setTimeout(reconcileHist,0);
+}
+/* системная кнопка «назад» закрывает окно: на время открытого окна в истории лежит одна служебная запись */
+function reconcileHist(){
+  if(histBusy) return;
+  const open=!$('#modal').hidden;
+  if(open&&histDepth===0){try{history.pushState({sheet:1},'');histDepth=1}catch(e){}}
+  else if(!open&&histDepth===1){histBusy=true;clearTimeout(histT);histT=setTimeout(()=>{histBusy=false;histDepth=0},800);try{history.back()}catch(e){histBusy=false;histDepth=0}}
+}
+window.addEventListener('popstate',()=>{
+  if(histBusy){histBusy=false;histDepth=0;clearTimeout(histT);reconcileHist();return}
+  if(histDepth===1){histDepth=0;if(!$('#modal').hidden) hideSheet()}
+});
 function twoStep(el,label,fn){
   if(el.dataset.arm){fn();return}
   el.dataset.arm='1';const old=el.textContent;el.textContent=label;
@@ -435,8 +492,8 @@ function comboLabel(c){
 
 /* ---------- prefs (per device) ---------- */
 const PK='moya-korzina-ui',DK='moya-korzina-v1';
-const prefs={prices:true,keys:{},open:{}};
-function loadPrefs(){try{const j=JSON.parse(localStorage.getItem(PK)||'{}');prefs.prices=j.prices!==false;prefs.keys=j.keys&&typeof j.keys==='object'?j.keys:{};prefs.open=j.open&&typeof j.open==='object'?j.open:{}}catch(e){}}
+const prefs={prices:true,keys:{},open:{},bcols:'auto',bsort:'custom',bhide:false,autoClear:true,pf:'',iview:'list',tab:'',scr:{},toKassa:false,kwho:undefined,kcat:''};
+function loadPrefs(){try{const j=JSON.parse(localStorage.getItem(PK)||'{}');prefs.prices=j.prices!==false;prefs.keys=j.keys&&typeof j.keys==='object'?j.keys:{};prefs.open=j.open&&typeof j.open==='object'?j.open:{};prefs.tab=j.tab||'';prefs.scr=j.scr&&typeof j.scr==='object'?j.scr:{};prefs.toKassa=!!j.toKassa;prefs.kwho=j.kwho;prefs.kcat=j.kcat||'';prefs.pf=j.pf||'';prefs.bcols=j.bcols||'auto';prefs.bsort=j.bsort||'custom';prefs.bhide=!!j.bhide;prefs.autoClear=j.autoClear!==false;prefs.iview=j.iview==='blocks'?'blocks':'list'}catch(e){}}
 function savePrefs(){try{localStorage.setItem(PK,JSON.stringify(prefs))}catch(e){}}
 Object.assign(ICONS,{
   basket:'<path d="M3 9h18l-2 11H5z"/><path d="M8 9l4-6 4 6"/>',
@@ -451,19 +508,26 @@ Object.assign(ICONS,{
 });
 /* ---------- state ---------- */
 const DEF_TAGS=[{id:'daily',name:'Ежедневная',c:2,grp:'ess'},{id:'planned',name:'Запланированная',c:0,grp:'ess'},{id:'must',name:'Обязательная',c:1,grp:'ess'},{id:'unplanned',name:'Внеплановая',c:4,grp:'wish'},{id:'wish',name:'Хотелка',c:3,grp:'wish'}];
-function defSettings(){return {manualEss:0,manualWish:0,manualFirst:false,budgetManual:false,currency:'₽',nameMode:'normal',cats:['Продукты','Бытовая химия','Одежда','Сигареты','Другое'],tags:clone(DEF_TAGS),budget:0,useFin:true,toFin:true}}
-function normSettings(d){const b=defSettings(),s=Object.assign(b,d||{});if(!Array.isArray(s.cats)) s.cats=b.cats;if(!Array.isArray(s.tags)||!s.tags.length) s.tags=b.tags;return s}
-const KINDS=['items','packs','stores','list','buys'];
-const state={settings:defSettings(),items:new Map(),packs:new Map(),stores:new Map(),list:new Map(),buys:new Map(),bridge:null};
-const ui={tab:'list',q:'',cat:'',tag:'',store:'',only:'',sort:'name',limit:100,selMode:false,sel:new Set(),group:'store',capturing:null,period:'all',metric:'cnt'};
-const MODES=[['normal','Обычные'],['f0','Смешные 1'],['f1','Смешные 2'],['f2','Смешные 3'],['rand','Случайные']];
-const UNITS=['шт','кг','г','л','мл','уп'];
+function defSettings(){return {manualEss:0,manualWish:0,manualFirst:false,budgetManual:false,currency:'₽',nameMode:'normal',cats:['Продукты','Бытовая химия','Одежда','Сигареты','Другое'],catIcons:{},cv:0,profiles:[],tags:clone(DEF_TAGS),budget:0,useFin:true,toFin:true}}
+const DEF_CATS=[['Продукты','🛒'],['Мясные','🥩'],['Колбасы и деликатесы','🌭'],['Рыба и морепродукты','🐟'],['Молочные','🥛'],['Яйца','🥚'],['Хлеб и выпечка','🍞'],['Крупы и макароны','🍚'],['Соусы и специи','🧂'],['Консервы','🥫'],['Масла','🫒'],['Фрукты','🍎'],['Овощи','🥦'],['Зелень и грибы','🍄'],['Орехи и сухофрукты','🥜'],['Сладости','🍫'],['Чай и кофе','☕'],['Напитки','🥤'],['Алкоголь','🍷'],['Заморозка','🧊'],['Готовая еда','🍱'],['Детское','🧸'],['Для животных','🐾'],['Лекарства','💊'],['Гигиена и уход','🧼'],['Бытовая химия','🧴'],['Хозтовары','🗑️'],['Посуда и кухня','🍽️'],['Одежда','👕'],['Обувь','👟'],['Канцелярия','✏️'],['Электроника','🔌'],['Инструменты','🔧'],['Для дома','🏠'],['Авто','🚗'],['Книги','📚'],['Спорт','⚽'],['Подарки','🎁'],['Цветы и сад','🌷'],['Сигареты','🚬'],['Другое','📦']];
+function normSettings(d){const b=defSettings(),s=Object.assign(b,d||{});if(!Array.isArray(s.cats)) s.cats=b.cats;if(!Array.isArray(s.tags)||!s.tags.length) s.tags=b.tags;
+  if(!s.catIcons||typeof s.catIcons!=='object') s.catIcons={};if(!Array.isArray(s.profiles)) s.profiles=[];
+  if(s.cv!==2){s.cats=s.cats.slice();s.catIcons=Object.assign({},s.catIcons);DEF_CATS.forEach(p=>{if(s.cats.indexOf(p[0])<0) s.cats.push(p[0]);if(!s.catIcons[p[0]]) s.catIcons[p[0]]=p[1]});s.cv=2}
+  return s}
+const catIcon=c=>(state.settings.catIcons&&state.settings.catIcons[c])||(DEF_CATS.find(p=>p[0]===c)||[0,'🏷️'])[1];
+const KINDS=['items','packs','stores','list','buys','outbox'];
+const state={settings:defSettings(),items:new Map(),packs:new Map(),stores:new Map(),list:new Map(),buys:new Map(),outbox:new Map(),bridge:null};
+const ui={tab:'list',q:'',cat:'',tag:'',store:'',only:'',blkEdit:false,sort:'name',limit:100,selMode:false,sel:new Set(),cats:new Set(),tags:new Set(),stores:new Set(),lMode:false,lsel:new Set(),gotFirst:false,group:'store',capturing:null,period:'all',metric:'cnt'};
+const MODES=[['normal','Обычные'],['f0','Альт. 1'],['f1','Альт. 2'],['f2','Альт. 3'],['rand','Случайные']];
+const UNITS=['шт','кг','г','л','мл','уп','пар'];
+const altMax=()=>{let m=3;state.items.forEach(it=>{const n=(it.funny||[]).filter(Boolean).length;if(n>m) m=n});return Math.min(m,12)};
+const modes=()=>[['normal','Обычные']].concat(Array.from({length:altMax()},(_,i)=>['f'+i,'Альт. '+(i+1)]),[['rand','Случайные']]);
 const TABS=['list','items','packs','spend','tier','settings'];
 /* ---------- storage ---------- */
 let st=0;
 function flushLocal(){
   clearTimeout(st);st=0;
-  try{localStorage.setItem(DK,JSON.stringify({v:1,settings:state.settings,items:[...state.items.values()],packs:[...state.packs.values()],stores:[...state.stores.values()],list:[...state.list.values()],buys:[...state.buys.values()],bridge:state.bridge}))}catch(e){}
+  try{localStorage.setItem(DK,JSON.stringify({v:1,settings:state.settings,items:[...state.items.values()],packs:[...state.packs.values()],stores:[...state.stores.values()],list:[...state.list.values()],buys:[...state.buys.values()],outbox:[...state.outbox.values()],bridge:state.bridge}))}catch(e){}
   if(Sync.cfg) syncScan();
 }
 const persistLocal=()=>{clearTimeout(st);st=setTimeout(flushLocal,120)};
@@ -483,7 +547,7 @@ function track(kind,id,prev,next){if(tx) tx.push({kind,id,prev:prev?clone(prev):
 function commit(label,fn,o){
   tx=[];let t;
   try{fn()}finally{t=tx;tx=null}
-  if(t.length){hist.undo.push({label,t});if(hist.undo.length>100) hist.undo.shift();hist.redo=[];if(!(o&&o.quiet)) toast(label,{undo:true})}
+  if(t.length){hist.undo.push({label,t});if(hist.undo.length>100) hist.undo.shift();hist.redo=[]}
   renderHeader();schedule();
 }
 const Persist={
@@ -492,7 +556,7 @@ const Persist={
   settings(mut){const prev=clone(state.settings);mut(state.settings);track('settings','s',prev,state.settings);persistLocal()}
 };
 function restore(kind,id,val){if(kind==='settings'){if(val){state.settings=normSettings(clone(val));persistLocal()}}else if(val==null) rawDel(kind,id);else rawPut(kind,clone(val))}
-function undo(){const e=hist.undo.pop();if(!e){toast('Нечего отменять');return}[...e.t].reverse().forEach(c=>restore(c.kind,c.id,c.prev));hist.redo.push(e);toast('Отменено: '+e.label,{redo:true});renderHeader();render(true)}
+function undo(){const e=hist.undo.pop();if(!e){toast('Нечего отменять');return}[...e.t].reverse().forEach(c=>restore(c.kind,c.id,c.prev));hist.redo.push(e);toast('Отменено: '+e.label);renderHeader();render(true)}
 function redo(){const e=hist.redo.pop();if(!e){toast('Нечего возвращать');return}e.t.forEach(c=>restore(c.kind,c.id,c.next));hist.undo.push(e);toast('Возвращено: '+e.label);renderHeader();render(true)}
 /* ---------- domain ---------- */
 const norm=s=>String(s||'').toLowerCase().replace(/ё/g,'е').trim();
@@ -515,7 +579,14 @@ const mainStore=it=>(it.store&&state.stores.has(it.store))?it.store:((cheapest(i
 const basePrice=it=>priceAt(it,mainStore(it));
 const entryStore=(e,it)=>(e.store&&state.stores.has(e.store))?e.store:mainStore(it);
 const entryUnit=(e,it)=>priceAt(it,entryStore(e,it));
-const entries=()=>[...state.list.values()].filter(e=>state.items.has(e.itemId));
+const parsePriceRange=v=>{const m=String(v||'').replace(/\u00a0/g,' ').match(/^\s*([\d\s.,]+?)\s*[-–—]\s*([\d\s.,]+?)\s*$/);if(!m) return null;const a=parseAmount(m[1]),b=parseAmount(m[2]);return isFinite(a)&&isFinite(b)&&a>0&&b>0?{lo:Math.min(a,b),hi:Math.max(a,b)}:null};
+function priceHiAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0) return p;const lo=Number(it.price)||0,hi=Number(it.pmax)||0;return lo>0?(hi>lo?hi:lo):0}
+const baseHi=it=>priceHiAt(it,mainStore(it));
+const entryHi=(e,it)=>priceHiAt(it,entryStore(e,it));
+const mrange=(lo,hi)=>hi>lo+0.5?nfm(r2(lo))+'–'+money(hi):money(lo);
+const curPf=()=>prefs.pf&&(state.settings.profiles||[]).some(p=>p.id===prefs.pf)?prefs.pf:'';
+const mainBuys=()=>[...state.buys.values()].filter(b=>!b.pf);
+const entries=()=>[...state.list.values()].filter(e=>state.items.has(e.itemId)&&(e.pf||'')===curPf());
 const inList=id=>entries().find(e=>e.itemId===id&&!e.done);
 function nameKey(n){return norm(n)}
 function findItemByName(n){const k=nameKey(n);if(!k) return null;for(const it of state.items.values()){if(nameKey(it.name)===k||(it.funny||[]).some(f=>nameKey(f)===k)) return it}return null}
@@ -528,7 +599,7 @@ function budget(){
   return null;
 }
 function budgetLine(total){
-  const b=budget();if(!b) return '<div class="s" style="margin-top:6px">Чтобы видеть, хватает ли денег, впишите свободную сумму в «Ещё» или подключите «Мою кассу».</div>';
+  const b=budget();if(!b) return '<div class="s" style="margin-top:6px">Чтобы видеть, хватает ли денег, впишите свободную сумму в «Ещё» или подключите «Финансы».</div>';
   const left=b.v-total,ok=left>=0;
   return '<div class="s" style="margin-top:6px">Свободно ('+b.src+'): <b class="num">'+money(b.v)+'</b> · '+(ok?'<span class="okc">хватает, останется '+money(left)+'</span>':'<span class="low">не хватает '+money(-left)+'</span>')+'</div>'
     +'<div class="meter" style="--c:'+(ok?'var(--income)':'var(--expense)')+'"><i style="width:'+Math.min(100,b.v>0?Math.round(total/b.v*100):100)+'%"></i></div>';
@@ -538,7 +609,7 @@ const FREQ=[[30,'Каждый день'],[15,'3–4 раза в неделю'],[
 const tagGrp=it=>{const t=tagOf(it);if(!t) return 'ess';return t.grp||(['daily','must','planned'].indexOf(t.id)>=0?'ess':'wish')};
 const grpOf=it=>(it&&it.eg&&it.eg!=='tag')?it.eg:tagGrp(it);
 const itemPrice=it=>(it&&(basePrice(it)||avgPrice(it.id)))||0;
-function buyDates(id){return [...state.buys.values()].filter(b=>b.itemId===id&&b.date).map(b=>b.date).sort()}
+function buyDates(id){return mainBuys().filter(b=>b.itemId===id&&b.date).map(b=>b.date).sort()}
 function rareIv(id){const d=buyDates(id);return d.length>=2?ddays(d[0],d[d.length-1])/(d.length-1):0}
 function nextDue(r){
   const d=buyDates(r.id);if(!d.length) return 'в истории ещё нет покупок';
@@ -547,7 +618,7 @@ function nextDue(r){
   return dd<=0?'пора покупать':dd<=14?'ждём через ~'+dd+' дн.':'ждём около '+due.split('-').reverse().slice(0,2).join('.');
 }
 function estimate(){
-  const s=state.settings,today=todayISO(),buys=[...state.buys.values()].filter(b=>b.date&&b.date<=today);
+  const s=state.settings,today=todayISO(),buys=mainBuys().filter(b=>b.date&&b.date<=today);
   const res={ok:false,src:'',ess:0,wish:0,rare:0,essM:0,wishM:0,rareM:0,days:0,n:0,span:0,rows:[],top:[]};
   let first=today;buys.forEach(b=>{if(b.date<first) first=b.date});
   const span=buys.length?ddays(first,today)+1:0,W=Math.max(1,Math.min(span||1,60)),from=addD(today,-(W-1));
@@ -580,7 +651,8 @@ function estimate(){
   res.essM=r2(res.ess*30);res.wishM=r2(res.wish*30);res.rareM=r2(res.rare*30);res.top=rows.filter(r=>r.g!=='rare').slice(0,8).filter(r=>r.m>0).map(r=>({n:r.n,m:r.m,g:r.g}));
   return res;
 }
-function avgPrice(itemId){let s=0,q=0;state.buys.forEach(b=>{if(b.itemId===itemId&&b.price>0){s+=b.price*(Number(b.qty)||1);q+=Number(b.qty)||1}});return q>=2?s/q:0}
+function avgPrice(itemId){let s=0,q=0;mainBuys().forEach(b=>{if(b.itemId===itemId&&b.price>0){s+=b.price*(Number(b.qty)||1);q+=Number(b.qty)||1}});return q>=2?s/q:0}
+function listTotalHi(){let t=0;entries().forEach(e=>{if(!e.done) t+=(Number(e.qty)||1)*entryHi(e,state.items.get(e.itemId))});return r2(t)}
 function listTotal(){let t=0;entries().forEach(e=>{if(!e.done) t+=(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId))});return r2(t)}
 function shopSummary(){
   const s=state.settings;
@@ -595,20 +667,20 @@ function addToList(itemId,qty){
   const it=state.items.get(itemId);if(!it) return;
   const ex=inList(itemId);
   if(ex) Persist.put('list',Object.assign({},ex,{qty:r2((Number(ex.qty)||1)+(qty||1))}));
-  else Persist.put('list',{id:uid(),itemId,qty:qty||1,store:'',done:false});
+  else Persist.put('list',{id:uid(),itemId,qty:qty||(!curPf()&&need(it)>0?r2(need(it)):1),store:'',done:false,pf:curPf()});
 }
 function buyEntry(e){
   const it=state.items.get(e.itemId);if(!it) return;
-  const q=Number(e.qty)||1,pr=entryUnit(e,it),sid=entryStore(e,it);
+  const q=Number(e.qty)||1,pr=r2((entryUnit(e,it)+entryHi(e,it))/2),sid=entryStore(e,it);
   Persist.put('list',Object.assign({},e,{done:true,doneAt:todayISO()}));
-  Persist.put('buys',{id:uid(),entry:e.id,itemId:it.id,name:it.name,cat:it.cat||'',tag:it.tag||'',date:todayISO(),qty:q,price:pr,sum:r2(q*pr),store:sid});
-  Persist.put('items',Object.assign({},it,{have:r2((Number(it.have)||0)+q)}));
+  Persist.put('buys',{id:uid(),entry:e.id,itemId:it.id,name:it.name,cat:it.cat||'',tag:it.tag||'',date:todayISO(),ts:Date.now(),qty:q,price:pr,sum:r2(q*pr),store:sid,pf:e.pf||''});
+  if(!e.pf) Persist.put('items',Object.assign({},it,{have:r2((Number(it.have)||0)+q)}));
 }
 function unbuyEntry(e){
   const it=state.items.get(e.itemId);
   for(const b of [...state.buys.values()]) if(b.entry===e.id) Persist.del('buys',b.id);
   Persist.put('list',Object.assign({},e,{done:false,got:false,doneAt:''}));
-  if(it){const q=Number(e.qty)||1;Persist.put('items',Object.assign({},it,{have:Math.max(0,r2((Number(it.have)||0)-q))}))}
+  if(it&&!e.pf){const q=Number(e.qty)||1;Persist.put('items',Object.assign({},it,{have:Math.max(0,r2((Number(it.have)||0)-q))}))}
 }
 /* ---------- view helpers ---------- */
 function fold(id,title,body,hint){
@@ -621,14 +693,20 @@ const fchip=(on,act,v,label)=>'<button class="fchip'+(on?' on':'')+'" type="butt
 const sub2=it=>funnyOn()&&dn(it)!==it.name?' · '+esc(it.name):'';
 function stockTxt(it){
   const h=Number(it.have)||0,m=Number(it.min)||0,u=it.unit||'шт';
-  if(m>0) return h<m?'<span class="low">есть '+nfm(h)+' из '+nfm(m)+' '+u+'</span>':'есть '+nfm(h)+' '+u;
+  if(m>0) return h<=0?'<span class="low">нет дома, нужно '+nfm(m)+' '+u+'</span>':h<m?'<span class="low">есть '+nfm(h)+' из '+nfm(m)+' '+u+'</span>':'есть '+nfm(h)+' '+u;
   return h>0?'есть '+nfm(h)+' '+u:'';
 }
 /* ---------- views ---------- */
+function profileBar(){
+  const ps=state.settings.profiles||[],cp=curPf();
+  let h='<section class="card"><div class="chipbar">'+fchip(!cp,'pf-set','','Мой список')+ps.map(p=>fchip(cp===p.id,'pf-set',p.id,'👤 '+p.name)).join('')+'<button class="fchip act" type="button" data-act="pf-new">＋ Для кого-то</button></div>';
+  if(cp){const p=ps.find(q=>q.id===cp);h+='<p class="s" style="margin:8px 0 0">Список для: <b>'+esc(p.name)+'</b>. Это не попадает в вашу статистику, запасы и кассу. <button class="link" type="button" data-act="pf-edit">Изменить</button></p>'}
+  return h+'</section>';
+}
 function viewList(){
   const all=entries(),open=all.filter(e=>!e.done),done=all.filter(e=>e.done),P=prefs.prices;
-  const total=listTotal(),shortN=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id)).length;
-  let h='<div class="stack">';
+  const gotN=open.filter(e=>e.got).length,total=listTotal(),shortN=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id)).length;
+  let h='<div class="stack">'+profileBar();
   h+='<section class="card"><div class="qadd"><input id="q-add" class="inp" list="dl-items" placeholder="Что купить? Название и Enter" autocomplete="off"><button class="btn primary" type="button" data-act="q-add">Добавить</button></div>'
     +'<datalist id="dl-items">'+[...state.items.values()].map(it=>'<option value="'+esc(dn(it))+'"></option>').join('')+'</datalist>'
     +'<div class="chipbar" style="margin-top:10px">'
@@ -636,18 +714,22 @@ function viewList(){
     +'<button class="fchip act" type="button" data-act="pick-pack">Из пака</button>'
     +(open.length?'<button class="fchip act" type="button" data-act="list-to-pack">Сохранить как пак</button>':'')
     +(P&&open.length?'<button class="fchip act" type="button" data-act="cheap-all">Самые дешёвые магазины</button>':'')
-    +(open.some(e=>!e.got)?'<button class="fchip act" type="button" data-act="got-all">Отметить всё</button>':'')+(done.length?'<button class="fchip act" type="button" data-act="clear-done">Убрать купленное ('+done.length+')</button>':'')+'</div></section>';
+    +(open.some(e=>!e.got)?'<button class="fchip act" type="button" data-act="got-all">Отметить всё</button>':'')+(done.length?'<button class="fchip act" type="button" data-act="clear-done">Убрать купленное ('+done.length+')</button>':'')
+    +(gotN?'<button class="fchip act" type="button" data-act="got-none">Снять отметки ('+gotN+')</button>':'')
+    +(all.length?'<button class="fchip act" type="button" data-act="lmode">'+(ui.lMode?'Готово':'Выбрать несколько')+'</button><button class="fchip act" type="button" data-act="list-clear">Очистить список</button>'+fchip(ui.gotFirst,'got-first','','Отмеченные сверху'):'')+'</div></section>';
+  if(ui.lMode&&all.length) h+='<section class="card bulk"><div class="sec-h"><b>Выбрано: '+ui.lsel.size+'</b><span><button class="link" type="button" data-act="lsel-all">все</button> · <button class="link" type="button" data-act="lsel-none">снять</button></span></div>'
+    +'<div class="actions"><button class="btn small primary" type="button" data-act="lbulk-rm"'+(ui.lsel.size?'':' disabled')+'>Убрать из списка</button><button class="btn small" type="button" data-act="lbulk-got"'+(ui.lsel.size?'':' disabled')+'>Отметить купленным</button><button class="btn small" type="button" data-act="lbulk-ungot"'+(ui.lsel.size?'':' disabled')+'>Снять отметку</button></div></section>';
   if(P&&open.length){
     let cheap=0;open.forEach(e=>{const it=state.items.get(e.itemId),c=cheapest(it),q=Number(e.qty)||1;cheap+=q*(c?c.p:entryUnit(e,it))});cheap=r2(cheap);
     const byS={};open.forEach(e=>{const it=state.items.get(e.itemId),sid=entryStore(e,it),q=Number(e.qty)||1;byS[sid]=(byS[sid]||0)+q*entryUnit(e,it)});
-    h+='<section class="card"><div class="lbl">В списке '+open.length+' · примерно</div><div class="hero-num" style="color:var(--ink);font-size:clamp(24px,7vw,32px)">'+money(total)+'</div>';
+    h+='<section class="card"><div class="lbl">В списке '+open.length+' · примерно</div><div class="hero-num" style="color:var(--ink);font-size:clamp(24px,7vw,32px)">'+mrange(total,listTotalHi())+'</div>';
     h+=budgetLine(total)
       +(Object.keys(byS).length>1?'<div class="s" style="margin-top:8px">'+Object.keys(byS).map(k=>esc(storeName(k)||'без магазина')+' '+money(byS[k])).join(' · ')+'</div>':'')
       +(cheap<total-0.5?'<div class="s" style="margin-top:6px">По самым дешёвым ценам: <b class="num">'+money(cheap)+'</b> (<span class="okc">−'+money(total-cheap)+'</span>)</div>':'')+'</section>';
   }
-  h+=adviceCard();
+  if(!curPf()) h+=adviceCard();
   if(!state.items.size) return h+'<section class="card"><div class="empty">Пока пусто. Добавьте товары кнопкой «+» или посмотрите, как всё выглядит, на примере.</div><div class="actions"><button class="btn primary" type="button" data-act="demo">Загрузить пример</button></div></section></div>';
-  if(!all.length) return h+'<section class="card"><div class="empty">Список пуст. Впишите товар выше, возьмите из пака или нажмите «Недостающее».</div></section></div>';
+  if(!all.length) return h+'<section class="card"><div class="empty">Список пуст. Впишите товар выше, возьмите из пака или нажмите «Недостающее».</div></section>'+suggestCard()+'</div>';
   h+='<div class="seg" role="group" aria-label="Группировка">'+[['store','По магазинам'],['cat','По категориям'],['none','Без групп']].map(g=>'<button type="button" data-act="group" data-v="'+g[0]+'" class="'+(ui.group===g[0]?'on':'')+'">'+g[1]+'</button>').join('')+'</div>';
   const gk=e=>{const it=state.items.get(e.itemId);return ui.group==='store'?entryStore(e,it):ui.group==='cat'?(it.cat||''):''};
   const gl=k=>ui.group==='store'?(storeName(k)||'Магазин не выбран'):ui.group==='cat'?(k||'Без категории'):'';
@@ -656,7 +738,7 @@ function viewList(){
   const keys=[...groups.keys()].sort((a,b)=>(gl(a)<gl(b)?-1:1));
   h+='<section class="card">';
   keys.forEach(k=>{
-    const arr=groups.get(k).sort((a,b)=>(a.done-b.done)||(dn(state.items.get(a.itemId))<dn(state.items.get(b.itemId))?-1:1));
+    const arr=groups.get(k).sort((a,b)=>(a.done-b.done)||(ui.gotFirst?((b.got?1:0)-(a.got?1:0)):0)||(dn(state.items.get(a.itemId))<dn(state.items.get(b.itemId))?-1:1));
     const sum=arr.filter(e=>!e.done).reduce((s,e)=>s+(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId)),0);
     if(ui.group!=='none') h+='<div class="grp"><b>'+esc(gl(k))+'</b>'+(P&&sum?'<span class="s num">'+money(sum)+'</span>':'')+'</div>';
     h+=arr.map(entryRow).join('');
@@ -666,28 +748,42 @@ function viewList(){
   if(open.length||done.length){
     const gs=r2(got.reduce((a,e)=>a+(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId)),0)),ts=todaySpent();
     h+='<section class="card finish"><div class="s">'+(got.length?'Отмечено '+got.length+' из '+open.length+(P&&gs?' на '+money(gs):'')+'.':'Отмечайте купленное галочками. Когда закончите, нажмите кнопку: покупки запишутся в историю, а я покажу, сколько потрачено.')+(P&&ts?' Уже записано сегодня: '+money(ts)+'.':'')+'</div>'
-      +'<div class="actions" style="margin-top:8px"><button class="btn primary" type="button" data-act="finish"'+(got.length?'':' disabled')+'>Закончил покупки</button></div></section>';
+      +'<div class="actions" style="margin-top:8px"><button class="btn primary" type="button" data-act="finish"'+(got.length?'':' disabled')+'>Закончил покупки</button><button class="btn" type="button" data-act="list-clear">Очистить список</button></div></section>';
   }
-  return h+'</div>';
+  return h+(curPf()?'':suggestCard())+'</div>';
 }
-function todaySpent(){const t=todayISO();let s=0;state.buys.forEach(b=>{if(b.date===t) s+=Number(b.sum)||0});return r2(s)}
+const ERASE=[['m1','за последнюю минуту',1/60],['m10','за 10 минут',10/60],['m30','за 30 минут',.5],['h1','за последний час',1],['h6','за 6 часов',6],['h24','за сутки',24],['h72','за 3 дня',72],['h168','за 7 дней',168],['h720','за 30 дней',720],['all','всю историю','all']];
+const tsOf=b=>Number(b.ts)||new Date((b.date||'1970-01-01')+'T12:00:00').getTime();
+function buysIn(h){const lim=h==='all'?-1:Date.now()-Number(h)*3600e3;let n=0;state.buys.forEach(b=>{if(h==='all'||tsOf(b)>=lim) n++});return n}
+function suggestCard(){
+  const all=[...state.items.values()],P=prefs.prices;
+  const rows=all.filter(it=>need(it)>0&&!inList(it.id)&&grpOf(it)==='ess').sort((a,b)=>need(b)/(Number(b.min)||1)-need(a)/(Number(a.min)||1)||dn(a).localeCompare(dn(b),'ru'));
+  if(!rows.length) return (all.length&&!all.some(it=>Number(it.min)>0))?'<section class="card"><div class="s">Чтобы здесь появлялись подсказки, что пора докупить, укажите у нужных товаров в карточке «Хочу держать не меньше».</div></section>':'';
+  const sh=rows.slice(0,10);
+  return '<section class="card"><div class="sec-h"><h3>Желательно купить</h3><span class="s">нужное, чего не хватает дома</span></div>'
+    +sh.map(it=>{const n=Math.ceil(need(it)),u=itemPrice(it);return '<div class="row"><span style="flex:1;min-width:0"><b>'+esc(dn(it))+'</b>'+tagChip(it)+'<br><span class="s">'+stockTxt(it).replace(/<[^>]+>/g,'')+'</span></span>'+(P&&u?'<span class="a">'+money(n*u)+'</span>':'')+'<button class="btn small" type="button" data-act="sug-add" data-id="'+esc(it.id)+'">В список</button></div>'}).join('')
+    +(rows.length>sh.length?'<div class="s">И ещё '+(rows.length-sh.length)+'.</div>':'')
+    +'<div class="actions" style="margin-top:8px"><button class="btn small primary" type="button" data-act="sug-all">Добавить всё нужное</button></div></section>';
+}
+function todaySpent(){const t=todayISO();let s=0;mainBuys().forEach(b=>{if(b.date===t) s+=Number(b.sum)||0});return r2(s)}
 function entryRow(e){
   const it=state.items.get(e.itemId),q=Number(e.qty)||1,P=prefs.prices,u=entryUnit(e,it);
-  return '<div class="row'+(e.done?' done':e.got?' got':'')+'">'+chk(e.done||e.got,'buy',e.id,'ok',e.done?'Вернуть в список':e.got?'Снять отметку':'Отметить купленным')
-    +'<button class="rowmain" type="button" data-act="entry" data-id="'+esc(e.id)+'"><span class="tx"><span class="t">'+esc(dn(it))+'</span>'+tagChip(it)+'<br><span class="s">'+nfm(q)+' '+esc(it.unit||'шт')+(it.cat?' · '+esc(it.cat):'')+sub2(it)+'</span></span>'
-    +(P&&u?'<span class="amt-c"><span class="a">'+money(q*u)+'</span>'+(q!==1?'<span class="sub">'+money(u)+' за '+esc(it.unit||'шт')+'</span>':'')+'</span>':'')+'</button></div>';
+  return '<div class="row'+(e.done?' done':e.got?' got':'')+'">'+(ui.lMode?chk(ui.lsel.has(e.id),'lsel',e.id,'sel','Выбрать'):(e.done?'<span class="chk ok on" aria-hidden="true" style="pointer-events:none;opacity:.7">'+ic('check')+'</span>':chk(e.got,'buy',e.id,'ok','Отметить купленным')))
+    +'<button class="rowmain" type="button" data-act="'+(ui.lMode?'lsel':'entry')+'" data-id="'+esc(e.id)+'"><span class="tx"><span class="t">'+esc(dn(it))+'</span>'+tagChip(it)+'<br><span class="s">'+nfm(q)+' '+esc(it.unit||'шт')+(it.cat?' · '+esc(it.cat):'')+sub2(it)+'</span></span>'
+    +(P&&u?'<span class="amt-c"><span class="a">'+mrange(q*u,q*entryHi(e,it))+'</span>'+(q!==1?'<span class="sub">'+mrange(u,entryHi(e,it))+' за '+esc(it.unit||'шт')+'</span>':'')+'</span>':'')+'</button></div>';
 }
 function filtered(){
   const q=norm(ui.q);
   const out=[...state.items.values()].filter(it=>{
-    if(ui.cat&&(it.cat||'')!==ui.cat) return false;
-    if(ui.tag&&it.tag!==ui.tag) return false;
-    if(ui.store&&!(it.prices&&ui.store in it.prices)&&it.store!==ui.store) return false;
-    if(ui.only==='low'&&!(need(it)>0)) return false;
+    if(ui.cats.size&&!ui.cats.has(it.cat||'')) return false;
+    if(ui.tags.size&&!ui.tags.has(it.tag)) return false;
+    if(ui.stores.size&&![...ui.stores].some(sid=>(it.prices&&sid in it.prices)||it.store===sid)) return false;
+    if(ui.only==='low'&&!(need(it)>0&&(Number(it.have)||0)>0)) return false;
+    if(ui.only==='none'&&!((Number(it.min)||0)>0&&(Number(it.have)||0)<=0)) return false;
     if(ui.only==='have'&&!(Number(it.have)>0)) return false;
     return !q||hay(it).includes(q);
   });
-  const cmp={name:(a,b)=>dn(a).localeCompare(dn(b),'ru'),cat:(a,b)=>(a.cat||'я').localeCompare(b.cat||'я','ru')||dn(a).localeCompare(dn(b),'ru'),price:(a,b)=>(basePrice(a)||1e12)-(basePrice(b)||1e12)};
+  const cmp={name:(a,b)=>dn(a).localeCompare(dn(b),'ru'),cat:(a,b)=>(a.cat||'я').localeCompare(b.cat||'я','ru')||dn(a).localeCompare(dn(b),'ru'),price:(a,b)=>(basePrice(a)||1e12)-(basePrice(b)||1e12),noprice:(a,b)=>((basePrice(a)>0?1:0)-(basePrice(b)>0?1:0))||dn(a).localeCompare(dn(b),'ru'),sel:(a,b)=>{const k=it=>(ui.selMode&&ui.sel.size)?ui.sel.has(it.id):!!inList(it.id);return (k(b)-k(a))||dn(a).localeCompare(dn(b),'ru')}};
   return out.sort(cmp[ui.sort]||cmp.name);
 }
 function itemRow(it){
@@ -696,7 +792,7 @@ function itemRow(it){
   if(!P&&ms) sub.push(esc(storeName(ms)));
   return '<div class="row">'+(ui.selMode?chk(sel,'sel',it.id,'sel','Выбрать'):'')
     +'<button class="rowmain" type="button" data-act="'+(ui.selMode?'sel':'item')+'" data-id="'+esc(it.id)+'"><span class="tx"><span class="t">'+esc(dn(it))+'</span>'+tagChip(it)+'<br><span class="s">'+(sub.join(' · ')||'&nbsp;')+sub2(it)+'</span></span>'
-    +(P?'<span class="amt-c">'+(bp?'<span class="a">'+money(bp)+'</span>':'<span class="s">нет цены</span>')+(ms?'<span class="sub">'+esc(storeName(ms))+(c&&c.sid!==ms&&c.p<bp?' · дешевле в '+esc(storeName(c.sid)):'')+'</span>':'')+'</span>':'')+'</button>'
+    +(P?'<span class="amt-c">'+(bp?'<span class="a">'+mrange(bp,baseHi(it))+'</span>':'<span class="s">нет цены</span>')+(ms?'<span class="sub">'+esc(storeName(ms))+(c&&c.sid!==ms&&c.p<bp?' · дешевле в '+esc(storeName(c.sid)):'')+'</span>':'')+'</span>':'')+'</button>'
     +(ui.selMode?'':'<button class="icon-btn'+(inl?' on':'')+'" type="button" data-act="to-list" data-id="'+esc(it.id)+'" aria-label="'+(inl?'Убрать из списка':'В список')+'" style="width:36px;height:36px;border-radius:10px">'+ic(inl?'check':'plus')+'</button>')+'</div>';
 }
 function catalogHTML(){
@@ -705,18 +801,51 @@ function catalogHTML(){
   if(arr.length>shown.length) h+='<div style="padding-top:8px"><button class="btn" type="button" data-act="more">Показать ещё ('+(arr.length-shown.length)+')</button></div>';
   return h;
 }
+function catCounts(){const s=state.settings,cnt={};let none=0;state.items.forEach(it=>{if(it.cat&&s.cats.indexOf(it.cat)>=0) cnt[it.cat]=(cnt[it.cat]||0)+1;else none++});return {cnt,none}}
+function catOrder(){
+  const s=state.settings,{cnt}=catCounts(),l=s.cats.slice(),m=prefs.bsort;
+  if(m==='az') l.sort((a,b)=>a.localeCompare(b,'ru'));
+  else if(m==='za') l.sort((a,b)=>b.localeCompare(a,'ru'));
+  else if(m==='many') l.sort((a,b)=>(cnt[b]||0)-(cnt[a]||0)||a.localeCompare(b,'ru'));
+  else if(m==='few') l.sort((a,b)=>(cnt[a]||0)-(cnt[b]||0)||a.localeCompare(b,'ru'));
+  else if(m==='filled') l.sort((a,b)=>((cnt[b]||0)>0)-((cnt[a]||0)>0));
+  return l;
+}
+function catChips(){
+  const {cnt}=catCounts();
+  return catOrder().filter(c=>cnt[c]||ui.cats.has(c)).map(c=>fchip(ui.cats.has(c),'f-cat',c,catIcon(c)+' '+c)).join('')+'<button class="fchip act" type="button" data-act="iview" data-v="blocks">▦ Все категории</button>';
+}
+const BSORTS=[['custom','Мой порядок (по номерам)'],['az','По алфавиту А–Я'],['za','По алфавиту Я–А'],['many','Сначала где больше товаров'],['few','Сначала где меньше товаров'],['filled','Сначала непустые']];
+function blocksHTML(){
+  const s=state.settings,{cnt,none}=catCounts(),cols=prefs.bcols||'auto',num=cols!=='auto'?Number(cols):0;
+  const tile=(act,v,ic_,name,n,idx)=>'<button class="tile" type="button" data-act="'+act+'" data-v="'+esc(v)+'">'+(ui.blkEdit&&prefs.bsort==='custom'&&idx?'<span class="tno">'+idx+'</span>':'')+'<span class="te">'+esc(ic_)+'</span><span class="tn">'+esc(name)+'</span><span class="tc">'+(n==null?'':n+' шт.')+'</span>'+(ui.blkEdit&&act==='blk-edit-one'?'<span class="tx2">✎</span>':'')+'</button>';
+  let list=catOrder();if(prefs.bhide&&!ui.blkEdit) list=list.filter(c=>cnt[c]);
+  const sel=(id,opts,cur)=>'<select id="'+id+'" class="inp">'+opts.map(o=>'<option value="'+o[0]+'"'+(String(o[0])===String(cur)?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
+  let h=fold('bset','Вид блоков','<div class="row2"><label class="field"><span>В ширину</span>'+sel('b-cols',[['auto','Авто'],[1,'1 (списком)'],[2,'2'],[3,'3'],[4,'4'],[5,'5']],cols)+'</label>'
+    +'<label class="field"><span>Порядок</span>'+sel('b-sort',BSORTS,prefs.bsort)+'</label></div>'
+    +'<label class="check"><input id="b-hide" type="checkbox"'+(prefs.bhide?' checked':'')+'><span>Скрывать пустые категории</span></label>'
+    +(prefs.bsort==='custom'?'<p class="s">Свой порядок: нажмите «Править», откройте блок и впишите его номер.</p>':''),'');
+  h+='<section class="card"><div class="sec-h"><b>Категории</b><button class="link" type="button" data-act="blk-edit">'+(ui.blkEdit?'Готово':'Править')+'</button></div>';
+  if(ui.blkEdit) h+='<p class="s">Нажмите на блок, чтобы изменить название, значок, номер или удалить.</p>';
+  h+='<div class="tiles'+(num===1?' c1':num>=4?' dense':'')+'"'+(num?' style="grid-template-columns:repeat('+num+',minmax(0,1fr))"':'')+'>'
+    +list.map(c=>tile(ui.blkEdit?'blk-edit-one':'blk-open',c,catIcon(c),c,cnt[c]||0,s.cats.indexOf(c)+1)).join('')
+    +(none&&!(prefs.bhide&&!ui.blkEdit&&false)?tile('blk-open','','🏷️','Без категории',none):'')+'<button class="tile add" type="button" data-act="blk-new"><span class="te">＋</span><span class="tn">Своя категория</span></button></div></section>';
+  return h;
+}
 function viewItems(){
   const arr=filtered(),s=state.settings;
-  const nAct=(ui.tag?1:0)+(ui.store?1:0)+(ui.only?1:0);
-  let h='<div class="stack"><section class="card"><input id="q" class="inp" type="search" placeholder="Поиск по названию, смешному названию, категории" value="'+esc(ui.q)+'" autocomplete="off">'
-    +'<div class="chipbar" style="margin-top:10px">'+fchip(!ui.cat,'f-cat','','Все')+s.cats.map(c=>fchip(ui.cat===c,'f-cat',c,c)).join('')+'</div></section>';
+  const nAct=ui.tags.size+ui.stores.size+(ui.only?1:0);
+  let h='<div class="stack"><section class="card"><input id="q" class="inp" type="search" placeholder="Поиск по названию, альт. названию, категории" value="'+esc(ui.q)+'" autocomplete="off">'
+    +'<div class="chipbar" style="margin-top:10px">'+fchip(!ui.cats.size,'f-cat','','Все')+catChips()+'</div></section>';
+  h+='<div class="seg" style="margin:2px 0"><button type="button" class="'+(prefs.iview==='list'?'on':'')+'" data-act="iview" data-v="list">Списком</button><button type="button" class="'+(prefs.iview==='blocks'?'on':'')+'" data-act="iview" data-v="blocks">Блоками</button></div>';
+  if(prefs.iview==='blocks'&&!ui.q) return h+blocksHTML()+'</div>';
   h+=fold('filters','Ещё фильтры и сортировка',
-    '<div class="lbl">Метка</div><div class="chipbar">'+fchip(!ui.tag,'f-tag','','Все')+s.tags.map(t=>fchip(ui.tag===t.id,'f-tag',t.id,t.name)).join('')+'</div>'
-    +'<div class="lbl">Магазин</div><div class="chipbar">'+fchip(!ui.store,'f-store','','Все')+[...state.stores.values()].map(t=>fchip(ui.store===t.id,'f-store',t.id,t.name)).join('')+'</div>'
-    +'<div class="lbl">Запас</div><div class="chipbar">'+fchip(!ui.only,'f-only','','Все')+fchip(ui.only==='low','f-only','low','Нужно докупить')+fchip(ui.only==='have','f-only','have','Есть дома')+'</div>'
-    +'<div class="lbl">Сортировка</div><div class="chipbar">'+[['name','По названию'],['cat','По категории'],['price','Сначала дешёвые']].map(x=>fchip(ui.sort===x[0],'f-sort',x[0],x[1])).join('')+'</div>',
+    '<div class="lbl">Метка</div><div class="chipbar">'+fchip(!ui.tags.size,'f-tag','','Все')+s.tags.map(t=>fchip(ui.tags.has(t.id),'f-tag',t.id,t.name)).join('')+'</div>'
+    +'<div class="lbl">Магазин</div><div class="chipbar">'+fchip(!ui.stores.size,'f-store','','Все')+[...state.stores.values()].map(t=>fchip(ui.stores.has(t.id),'f-store',t.id,t.name)).join('')+'</div>'
+    +'<div class="lbl">Запас</div><div class="chipbar">'+fchip(!ui.only,'f-only','','Все')+fchip(ui.only==='low','f-only','low','Нужно докупить')+fchip(ui.only==='none','f-only','none','Нет совсем')+fchip(ui.only==='have','f-only','have','Есть дома')+'</div>'
+    +'<div class="lbl">Сортировка</div><div class="chipbar">'+[['name','По названию'],['cat','По категории'],['price','Сначала дешёвые'],['noprice','Сначала без цены'],['sel','Сначала выбранные']].map(x=>fchip(ui.sort===x[0],'f-sort',x[0],x[1])).join('')+'</div>',
     nAct?'выбрано: '+nAct:'');
-  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="s" id="catcount">Найдено '+arr.length+' из '+state.items.size+'</span><button class="btn small'+(ui.selMode?' primary':'')+'" type="button" data-act="sel-mode">'+(ui.selMode?'Готово':'Выбрать несколько')+'</button></div>';
+  h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="s" id="catcount">Найдено '+arr.length+' из '+state.items.size+'</span><span style="display:flex;gap:6px"><button class="btn small" type="button" data-act="items-unlist"'+(state.list.size?'':' hidden')+'>Убрать все из списка</button><button class="btn small'+(ui.selMode?' primary':'')+'" type="button" data-act="sel-mode">'+(ui.selMode?'Готово':'Выбрать несколько')+'</button></span></div>';
   if(ui.selMode){
     h+='<section class="card bulk"><div class="sec-h"><b>Выбрано: '+ui.sel.size+'</b><span><button class="link" type="button" data-act="sel-all">все найденные</button> · <button class="link" type="button" data-act="sel-none">снять</button></span></div>'
       +'<div class="actions"><button class="btn small primary" type="button" data-act="bulk-list"'+(ui.sel.size?'':' disabled')+'>В список</button><button class="btn small" type="button" data-act="bulk-edit"'+(ui.sel.size?'':' disabled')+'>Где купить, категория…</button><button class="btn small" type="button" data-act="bulk-pack"'+(ui.sel.size?'':' disabled')+'>В пак</button><button class="btn small danger" type="button" data-act="bulk-del"'+(ui.sel.size?'':' disabled')+'>Удалить</button></div></section>';
@@ -739,7 +868,7 @@ function viewPacks(){
 }
 function tierData(){
   const from=ui.period==='all'?'0000-00-00':addD(todayISO(),-Number(ui.period)+1),agg=new Map();
-  for(const b of state.buys.values()){
+  for(const b of mainBuys()){
     if(b.date<from) continue;
     const a=agg.get(b.itemId)||{id:b.itemId,name:b.name,n:0,sum:0,cat:b.cat,d1:b.date,d2:b.date};
     a.n++;a.sum+=Number(b.sum)||0;if(b.date<a.d1) a.d1=b.date;if(b.date>a.d2) a.d2=b.date;agg.set(b.itemId,a);
@@ -749,7 +878,7 @@ function tierData(){
 const wkStart=d=>{const t=new Date(d+'T00:00:00Z'),w=(t.getUTCDay()+6)%7;t.setUTCDate(t.getUTCDate()-w);return t.toISOString().slice(0,10)};
 const dshort=d=>{const p=d.split('-');return +p[2]+'.'+p[1]};
 function weeklyChart(metric){
-  const today=todayISO(),buys=[...state.buys.values()].filter(b=>b.date&&b.date<=today);
+  const today=todayISO(),buys=mainBuys().filter(b=>b.date&&b.date<=today);
   if(!buys.length) return '';
   let from=ui.period==='all'?buys.reduce((a,b)=>b.date<a?b.date:a,today):addD(today,-Number(ui.period)+1);
   const cap=addD(today,-181);if(from<cap) from=cap;
@@ -758,7 +887,7 @@ function weeklyChart(metric){
   buys.forEach(b=>{if(b.date<from) return;const i=idx.get(wkStart(b.date));if(i==null) return;const it=state.items.get(b.itemId),g=it?grpOf(it):'ess';bk[i][g]=(bk[i][g]||0)+(metric==='sum'?(Number(b.sum)||0):1)});
   const tot=bk.map(b=>b.ess+b.wish+b.rare+b.off),max=Math.max.apply(null,tot.concat([1]));
   const n=bk.length,W=340,H=150,pb=22,pt=16,gap=n>13?4:6,bw=Math.max(5,Math.floor((W-gap*(n+1))/n)),fmt=v=>metric==='sum'?(v>=10000?Math.round(v/1000)+'к':v>=1000?(Math.round(v/100)/10).toString().replace('.',',')+'к':String(Math.round(v))):String(v);
-  const col={ess:'var(--accent)',wish:'var(--warn)',rare:'var(--p2)',off:'var(--muted)'};
+  const col={ess:'var(--p2)',wish:'var(--p4)',rare:'var(--p3)',off:'var(--muted)'};
   let svg='<svg viewBox="0 0 '+W+' '+H+'" class="chart" role="img" aria-label="Покупки по неделям">';
   bk.forEach((b,i)=>{
     const x=gap+i*(bw+gap);let y=H-pb;
@@ -797,16 +926,16 @@ function viewTier(){
 function adviceCard(){
   const open=entries().filter(e=>!e.done);if(!open.length||!prefs.prices) return '';
   const b=budget();
-  if(!b) return '<section class="card"><div class="s">Чтобы я сам видел свободные деньги и подсказывал, куда уложиться, подключите синхронизацию с «Моей кассой» (Ещё → Синхронизация). Свободные деньги можно также ввести вручную.</div><div class="actions" style="margin-top:8px"><button class="btn small" type="button" data-act="tab" data-t="settings">Открыть настройки</button></div></section>';
-  const rows=open.map(e=>{const it=state.items.get(e.itemId),q=Number(e.qty)||1,u=entryUnit(e,it);return {e,it,u,sum:q*u,g:grpOf(it)}});
+  if(!b) return '<section class="card"><div class="s">Чтобы я сам видел свободные деньги и подсказывал, куда уложиться, подключите синхронизацию с «Финансами» (Ещё → Синхронизация). Свободные деньги можно также ввести вручную.</div><div class="actions" style="margin-top:8px"><button class="btn small" type="button" data-act="tab" data-t="settings">Открыть настройки</button></div></section>';
+  const rows=open.map(e=>{const it=state.items.get(e.itemId),q=Number(e.qty)||1,u=entryUnit(e,it);return {e,it,u,sum:q*entryHi(e,it),g:grpOf(it),stock:(Number(it.min)||0)>0&&(Number(it.have)||0)>=(Number(it.min)||0)}});
   const total=rows.reduce((a,r)=>a+r.sum,0),left=b.v-total,ok=left>=0;
   let h='<section class="card"><div class="sec-h"><h3>'+(ok?'Укладываемся в бюджет':'Выходим за бюджет на '+money(-left))+'</h3><span class="s">на руках сверх запланированного: '+money(b.v)+'</span></div>';
   if(b.stale) h+='<div class="hint" style="margin-bottom:8px">Данные кассы обновлялись '+new Date(b.u).toLocaleDateString('ru',{day:'numeric',month:'long'})+'. Откройте кассу, чтобы цифры были свежими.</div>';
   if(!ok){
-    const cands=rows.filter(r=>r.g!=='ess'&&r.g!=='rare'&&r.sum>0).sort((a,b2)=>b2.sum-a.sum),cut=[];let acc=0;
+    const cands=rows.filter(r=>r.sum>0&&(r.stock||(r.g!=='ess'&&r.g!=='rare'))).sort((a,b2)=>(b2.stock-a.stock)||(b2.sum-a.sum)),cut=[];let acc=0;
     for(const r of cands){if(acc>=-left) break;cut.push(r);acc+=r.sum}
     if(cut.length){
-      h+='<div class="lbl">Можно убрать (необязательное, дорогое первым)</div>'+cut.map(r=>'<div class="row"><span style="flex:1;min-width:0"><b>'+esc(dn(r.it))+'</b>'+tagChip(r.it)+'</span><span class="a">'+money(r.sum)+'</span><button class="btn small" type="button" data-act="cut" data-id="'+esc(r.e.id)+'">Убрать</button></div>').join('')
+      h+='<div class="lbl">Можно убрать (сначала то, что есть дома, потом необязательное, дорогое первым)</div>'+cut.map(r=>'<div class="row"><span style="flex:1;min-width:0"><b>'+esc(dn(r.it))+'</b>'+tagChip(r.it)+(r.stock?'<br><span class="s">дома есть '+nfm(Number(r.it.have))+' '+esc(r.it.unit||'шт')+', хватит пока не срочно</span>':'')+'</span><span class="a">'+money(r.sum)+'</span><button class="btn small" type="button" data-act="cut" data-id="'+esc(r.e.id)+'">Убрать</button></div>').join('')
         +'<div class="s" style="margin-top:6px">'+(acc>=-left?'Если убрать всё это, вернёмся в бюджет, останется '+money(acc+left)+'.':'Даже без необязательного не хватит '+money(-left-acc)+'.')+'</div>'
         +'<div class="actions" style="margin-top:8px"><button class="btn small primary" type="button" data-act="cut-all" data-ids="'+cut.map(r=>esc(r.e.id)).join(',')+'">Убрать всё предложенное</button></div>';
     }else h+='<div class="s">В списке только обязательное, убирать нечего. Попробуйте магазины подешевле.</div>';
@@ -845,7 +974,7 @@ function viewSpend(){
   const ex=[...state.items.values()].filter(it=>it.noEst);
   if(ex.length) h+='<section class="card"><div class="sec-h"><h3>Не учитываются</h3></div>'+ex.map(it=>'<div class="row">'+chk(false,'est-toggle',it.id,'ok','Учитывать')+'<span style="flex:1">'+esc(dn(it))+'</span></div>').join('')+'</section>';
   h+='<section class="card set-sec"><h3>Как это считается</h3><p class="s">Нажмите на строку или найдите товар в «Товарах» и откройте «История покупок и частота»: там можно указать, как часто вы его берёте (каждый день, раз в неделю…), поправить историю, добавить прошлые покупки или убрать лишние. Для каждого товара берётся история, если её достаточно (две недели и хотя бы три покупки), иначе ваша частота. Кружок слева исключает товар из оценки.</p>'
-    +'<div class="actions"><button class="btn small" type="button" data-act="buys-clear" data-d="7">Стереть покупки за 7 дней</button><button class="btn small danger" type="button" data-act="buys-clear" data-d="all">Стереть всю историю</button></div></section>';
+    +'<div class="lbl" style="margin-top:8px">Стереть историю покупок</div><div class="actions"><select id="erase-sel" class="inp" style="flex:1;min-width:0">'+ERASE.map(x=>'<option value="'+x[0]+'"'+(x[0]===(ui.eraseSel||'h6')?' selected':'')+'>'+x[1]+' ('+buysIn(x[2])+')</option>').join('')+'</select><button class="btn danger" type="button" data-act="buys-clear">Стереть</button></div></section>';
   return h+'</div>';
 }
 const ACTIONS=[
@@ -885,15 +1014,15 @@ function viewSettings(){
   }).join('')+'<div class="catadd"><input id="store-add" class="inp" type="text" placeholder="Новый магазин" autocomplete="off"><button class="btn" type="button" data-act="store-add">Добавить</button></div>';
   const keyrows=ACTIONS.map(a=>'<div class="keyrow"><span>'+esc(a.label)+'</span><span style="display:flex;gap:8px;align-items:center"><kbd>'+(ui.capturing===a.id?'нажмите клавиши…':esc(comboLabel(keyOf(a))))+'</kbd><button class="btn small" type="button" data-act="key-set" data-id="'+a.id+'">'+(ui.capturing===a.id?'Отмена':'Изменить')+'</button></span></div>').join('');
   let h='<div class="stack"><h3 style="font-size:18px">Ещё</h3>';
-  h+='<section class="card set-sec"><h3>Названия товаров</h3><div class="seg" role="group">'+MODES.map(m=>'<button type="button" data-act="mode" data-v="'+m[0]+'" class="'+(s.nameMode===m[0]?'on':'')+'">'+m[1]+'</button>').join('')+'</div>'
-    +'<p class="s">«Обычные» показывают нормальное название. «Смешные 1–3» показывают вариант по порядку из тех, что вы вписали у товара («хлиб», «хлеп»…). Если у товара нет такого варианта, берётся обычное название. «Случайные» выбирают вариант сами и не меняют его при каждом открытии.</p></section>';
-  h+='<section class="card set-sec"><h3>Бюджет и связь с «Моей кассой»</h3>'
+  h+='<section class="card set-sec"><h3>Названия товаров</h3><div class="seg wrap" role="group">'+modes().map(m=>'<button type="button" data-act="mode" data-v="'+m[0]+'" class="'+(s.nameMode===m[0]?'on':'')+'">'+m[1]+'</button>').join('')+'</div>'
+    +'<p class="s">«Обычные» показывают нормальное название. «Альт. 1, 2, 3…» показывают вариант по порядку из тех, что вы вписали у товара (сколько вписали, столько и кнопок). Если у товара нет такого варианта, берётся обычное название. «Случайные» выбирают вариант сами и не меняют его при каждом открытии.</p></section>';
+  h+='<section class="card set-sec"><h3>Бюджет и связь с «Финансами»</h3>'
     +'<label class="check"><input type="checkbox" data-set="useFin"'+(s.useFin?' checked':'')+'><span>Брать свободные деньги из кассы автоматически</span></label>'
-    +'<div class="sync-st">'+(b&&isFinite(b.free)?'Касса сообщает: на руках сверх запланированного <b>'+money(Math.max(0,b.free))+'</b>'+(Number(b.free)<0?' (по плану не хватает '+money(-b.free)+')':'')+(b.next?', ближайший доход '+esc(b.next):'')+'. Обновлено '+new Date(b.u||Date.now()).toLocaleString('ru',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+'.':'Касса пока ничего не прислала. Подключите синхронизацию с тем же кодом, что и в кассе, и обновите кассу до версии с мостом.')+'</div>'
+    +'<div class="sync-st">'+(b&&isFinite(b.free)?'Касса: свободно <b>'+money(Math.max(0,b.free))+'</b>'+(Number(b.free)<0?' (по плану не хватает '+money(-b.free)+')':'')+(b.next?', доход '+esc(b.next):'')+'.':'Касса пока ничего не прислала.')+'</div>'
     +'<label class="field"><span>Свободные деньги вручную (работает и без кассы)</span><input class="inp" type="text" inputmode="decimal" data-set="budget" value="'+esc(Number(s.budget)>0?s.budget:'')+'" placeholder="0" autocomplete="off"></label>'
     +'<label class="check"><input type="checkbox" data-set="budgetManual"'+(s.budgetManual?' checked':'')+'><span>Всегда брать мою сумму, даже если касса подключена</span></label>'
     +'<label class="check"><input type="checkbox" data-set="toFin"'+(s.toFin?' checked':'')+'><span>Делиться с кассой списком покупок и оценкой повседневных трат</span></label>'
-    +'<p class="s">Касса использует оценку из вкладки «Траты», чтобы прогноз остатка учитывал продукты. Цены нужны, чтобы видеть, хватает ли денег. Кнопка с монетой вверху скрывает их только на этом устройстве.</p></section>';
+    +'</section>';
   h+=fold('cats','Категории',chips(s.cats,'cat-del')+'<div class="catadd"><input id="cat-add" class="inp" type="text" placeholder="Новая категория" autocomplete="off"><button class="btn" type="button" data-act="cat-add">Добавить</button></div>',s.cats.length+' шт.');
   h+=fold('tags','Метки (плановая, внеплановая, хотелка…)',tagrows,s.tags.length+' шт.');
   h+=fold('stores','Магазины',storerows,state.stores.size+' шт.');
@@ -911,7 +1040,7 @@ function viewSettings(){
 let raf=0,pending=false;
 function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>render())}
 function renderHeader(){
-  $('#b-undo').disabled=!hist.undo.length;
+  $('#b-undo').disabled=!hist.undo.length;const rb=$('#b-redo');if(rb) rb.disabled=!hist.redo.length;
   $('#b-prices').classList.toggle('on',prefs.prices);
   $('#b-names').classList.toggle('on',funnyOn());
 }
@@ -920,63 +1049,96 @@ function render(force){
   const ae=document.activeElement;
   if(force!==true&&ae&&main.contains(ae)&&/^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)){pending=true;return}
   pending=false;
+  const y0=window.scrollY,bars=[...main.querySelectorAll('.chipbar,.seg')].map(e=>e.scrollLeft);
   const views={list:viewList,items:viewItems,packs:viewPacks,spend:viewSpend,tier:viewTier,settings:viewSettings};
   main.innerHTML=views[ui.tab]();
   document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===ui.tab));
   $('#fab').hidden=ui.tab==='settings'||ui.tab==='tier'||ui.tab==='spend';
+  const nb=[...main.querySelectorAll('.chipbar,.seg')];nb.forEach((e,i)=>{if(bars[i]) e.scrollLeft=bars[i]});
+  if(y0) window.scrollTo(0,y0);
 }
 document.addEventListener('focusout',()=>{if(pending) setTimeout(()=>{if(pending) schedule()},50)});
-function setTab(t){ui.tab=t;render(true);window.scrollTo(0,0)}
+function setTab(t){
+  prefs.scr=prefs.scr||{};prefs.scr[ui.tab]=Math.round(window.scrollY);
+  ui.tab=t;prefs.tab=t;savePrefs();render(true);
+  const y=prefs.scr[t]||0;window.scrollTo(0,y);requestAnimationFrame(()=>window.scrollTo(0,y));
+}
 /* ---------- forms ---------- */
 const optList=(arr,sel,first)=>(first==null?'':'<option value="">'+first+'</option>')+arr.map(x=>{const v=typeof x==='string'?x:x.id,l=typeof x==='string'?x:x.name;return '<option value="'+esc(v)+'"'+(v===sel?' selected':'')+'>'+esc(l)+'</option>'}).join('');
 const sortedStores=()=>[...state.stores.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
 function openItemForm(id,pre){
   const it=id?state.items.get(id):null,s=state.settings,x=it||Object.assign({name:'',funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}},pre||{});
-  fs={kind:'item',id:id||null};
+  fs={kind:'item',id:id||null,funny:((it?it.funny:(pre&&pre.funny))||[]).slice()};
   const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'" placeholder="нет в этом магазине" value="'+esc(x.prices&&x.prices[st.id]>0?x.prices[st.id]:'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
   const body='<div class="form"><label class="field"><span>Название (нормальное)</span><input id="i-name" class="inp" type="text" value="'+esc(x.name)+'" autocomplete="off" placeholder="Хлеб"></label>'
-    +'<label class="field"><span>Смешные названия через запятую (необязательно)</span><input id="i-funny" class="inp" type="text" value="'+esc((x.funny||[]).join(', '))+'" autocomplete="off" placeholder="хлиб, хлеп"></label>'
+    +'<div class="field"><span>Альт. названия (впишите вариант и нажмите Enter)</span><div id="i-funny-chips" class="altchips"></div><input id="i-funny-in" class="inp" type="text" autocomplete="off"></div>'
     +'<div class="row2"><label class="field"><span>Категория</span><select id="i-cat" class="inp">'+optList(s.cats.concat(x.cat&&s.cats.indexOf(x.cat)<0?[x.cat]:[]),x.cat,'Без категории')+'</select></label>'
     +'<label class="field"><span>Метка</span><select id="i-tag" class="inp">'+optList(s.tags,x.tag,'Без метки')+'</select></label></div>'
     +'<div class="row2"><label class="field"><span>Есть сейчас</span><input id="i-have" class="inp" type="text" inputmode="decimal" value="'+esc(x.have||'')+'" placeholder="0"></label>'
     +'<label class="field"><span>Хочу держать не меньше</span><input id="i-min" class="inp" type="text" inputmode="decimal" value="'+esc(x.min||'')+'" placeholder="0"></label></div>'
     +'<div class="row2"><label class="field"><span>Единица</span><select id="i-unit" class="inp">'+optList(UNITS,x.unit||'шт')+'</select></label>'
-    +'<label class="field"><span>Обычная цена ('+esc(s.currency)+')</span><input id="i-price" class="inp" type="text" inputmode="decimal" value="'+esc(x.price||'')+'" placeholder="если нет цены по магазинам"></label></div>'
+    +'<label class="field"><span>Обычная цена ('+esc(s.currency)+'), можно диапазоном</span><input id="i-price" class="inp" type="text" inputmode="decimal" value="'+esc(x.pmax>x.price&&x.price>0?x.price+'–'+x.pmax:(x.price||''))+'" placeholder="100 или диапазон 100–150"></label></div>'
     +'<label class="field"><span>Основной магазин</span><select id="i-store" class="inp">'+optList(sortedStores(),x.store,'Выбрать автоматически (самый дешёвый)')+'</select></label>'
     +'<div><div class="lbl" style="margin-bottom:6px">Цены по магазинам (где можем купить)</div>'+sp+'</div>'+(it?'<div class="actions"><button class="btn" type="button" data-act="item-hist" data-id="'+esc(it.id)+'">История покупок и частота</button></div>':'')+'<div class="err" id="i-err" role="alert"></div></div>';
-  openSheet(it?'Товар':'Новый товар',body,'<div class="actions">'+(it?'<button class="btn danger" type="button" data-act="item-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="item-save" data-primary="1">Сохранить</button></div>','i-name');
+  openSheet(it?'Товар':'Новый товар',body,'<div class="actions">'+(it?'<button class="btn danger" type="button" data-act="item-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="item-save" data-primary="1">Сохранить</button></div>','i-name');renderFunny();
+}
+const cap=v=>{v=String(v||'').trim();return v?v.charAt(0).toUpperCase()+v.slice(1):v};
+function renderFunny(){const el=$('#i-funny-chips');if(!el||!fs||!fs.funny) return;el.innerHTML=fs.funny.map((f,i)=>'<span class="altchip">'+esc(f)+'<button type="button" data-act="funny-rm" data-i="'+i+'" aria-label="Убрать">×</button></span>').join('')}
+function addFunny(){
+  const el=$('#i-funny-in');if(!el||!fs||!fs.funny) return;const v=cap(el.value);el.value='';if(!v) return;
+  const low=v.toLowerCase(),nm=($('#i-name')?$('#i-name').value:'').trim().toLowerCase();
+  if(low!==nm&&!fs.funny.some(f=>f.toLowerCase()===low)) fs.funny.push(v);
+  renderFunny();
 }
 function saveItem(){
-  const name=$('#i-name').value.trim();if(!name) return ($('#i-err').textContent='Введите название.');
+  const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();const name=cap($('#i-name').value);if(!name) return ($('#i-err').textContent='Введите название.');
   const old=fs.id?state.items.get(fs.id):null,dup=findItemByName(name);
   if(dup&&(!old||dup.id!==old.id)) return ($('#i-err').textContent='Такой товар уже есть: '+dup.name+'.');
   const num=v=>{v=String(v).trim();if(!v) return 0;const n=parseAmount(v);return isFinite(n)&&n>=0?n:0};
+  const rg=parsePriceRange($('#i-price').value);
   const prices={};document.querySelectorAll('[data-sp]').forEach(i=>{const p=num(i.value);if(p>0) prices[i.dataset.sp]=p});
   if(old&&old.prices) for(const k in old.prices) if(!state.stores.has(k)) prices[k]=old.prices[k];
-  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:$('#i-funny').value.split(/[,;]+/).map(v=>v.trim()).filter(Boolean),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:num($('#i-price').value)||'',store:$('#i-store').value,prices});
+  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices});
   closeSheet();commit(old?'Товар изменён':'Товар добавлен',()=>Persist.put('items',o));
+}
+function kassaBox(tot){
+  const b=state.bridge;if(curPf()) return '';if(!b||!Sync.cfg||!Array.isArray(b.people)||!b.people.length) return '';
+  const on=!!prefs.toKassa,ppl=b.people,cats=b.cats||[];
+  const who=prefs.kwho!==undefined&&(prefs.kwho===''||ppl.some(p=>p.id===prefs.kwho))?prefs.kwho:ppl[0].id;
+  const cat=cats.indexOf(prefs.kcat)>=0?prefs.kcat:(cats.indexOf('Продукты')>=0?'Продукты':(cats[0]||''));
+  return '<label class="check"><input id="fk-on" type="checkbox"'+(on?' checked':'')+'><span>Добавить в «Финансы» как трату</span></label>'
+    +'<div id="fk-box" class="form"'+(on?'':' hidden')+'>'
+    +(ppl.length>1?'<label class="field"><span>Чьи деньги</span><select id="fk-who" class="inp">'+ppl.map(p=>'<option value="'+esc(p.id)+'"'+(p.id===who?' selected':'')+'>'+esc(p.name)+'</option>').join('')+'<option value=""'+(who===''?' selected':'')+'>Поровну (все)</option></select></label>':'')
+    +'<div class="row2"><label class="field"><span>Категория</span><select id="fk-cat" class="inp">'+cats.map(c=>'<option'+(c===cat?' selected':'')+'>'+esc(c)+'</option>').join('')+'</select></label>'
+    +'<label class="field"><span>Сумма</span><input id="fk-amt" class="inp" type="text" inputmode="decimal" value="'+esc(r2(tot))+'" autocomplete="off"></label></div></div>';
 }
 function openFinish(){
   const g=entries().filter(e=>!e.done&&e.got);
   if(!g.length){toast('Сначала отметьте купленное галочками');return}
   fs={kind:'finish'};
-  let tot=0;const byS={};
-  const rows=g.map(e=>{const it=state.items.get(e.itemId),q=Number(e.qty)||1,u=entryUnit(e,it),p=q*u;tot+=p;const sn=storeName(entryStore(e,it))||'без магазина';byS[sn]=(byS[sn]||0)+p;
-    return '<div class="keyrow"><span>'+esc(dn(it))+' <span class="s">× '+nfm(q)+'</span></span><span class="num">'+(u?money(p):'без цены')+'</span></div>'}).join('');
+  let tot=0,totHi=0;const byS={};
+  const rows=g.map(e=>{const it=state.items.get(e.itemId),q=Number(e.qty)||1,u=entryUnit(e,it),p=q*u;tot+=p;totHi+=q*entryHi(e,it);const sn=storeName(entryStore(e,it))||'без магазина';byS[sn]=(byS[sn]||0)+p;
+    return '<div class="keyrow"><span>'+esc(dn(it))+' <span class="s">× '+nfm(q)+'</span></span><span class="num">'+(u?mrange(p,q*entryHi(e,it)):'без цены')+'</span></div>'}).join('');
   const ts=todaySpent(),sk=Object.keys(byS);
   openSheet('Закончили покупки?','<div class="form"><div class="card" style="padding:4px 14px">'+rows+'</div>'
-    +'<div class="keyrow" style="border:0"><span><b>Итого</b></span><b class="num">'+money(tot)+'</b></div>'
+    +'<div class="keyrow" style="border:0"><span><b>Итого</b></span><b class="num">'+mrange(tot,totHi)+'</b></div>'
+    +(totHi>tot+0.5?'<div class="s">Часть цен задана диапазоном. В «Финансы» уйдёт середина, поправьте по чеку.</div>':'')
     +(sk.length>1?'<div class="s">'+sk.map(k=>esc(k)+' '+money(byS[k])).join(' · ')+'</div>':'')
     +(ts?'<div class="s">Вместе с уже записанным сегодня выйдет '+money(ts+tot)+'.</div>':'')
+    +kassaBox((tot+totHi)/2)
+    +'<label class="check"><input id="fk-clear" type="checkbox"'+(prefs.autoClear!==false?' checked':'')+'><span>Убрать купленное из списка</span></label>'
     +'<p class="s">Покупки попадут в историю, и от неё будет считаться оценка трат для кассы. Неотмеченное останется в списке.</p></div>',
     '<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="close">Ещё не всё</button><button class="btn primary" type="button" data-act="finish-do" data-primary="1">Записать покупки</button></div>');
 }
-function openFinished(n,tot){
+function openFinished(n,tot,kz){
   fs={kind:'done'};
   const all=todaySpent(),txt=String(r2(all)).replace('.',',');
   openSheet('Готово','<div class="form"><div class="s">Записано позиций: '+n+'.</div><div class="lbl">Потрачено сегодня</div><div class="hero-num" style="color:var(--ink)">'+money(all)+'</div>'
-    +(all!==r2(tot)?'<div class="s">из них эти покупки: '+money(tot)+'.</div>':'')+'<p class="s">Внесите эту сумму в «Моей кассе» как расход (например, «Продукты»). Автоматически я ничего туда не списываю.</p></div>',
-    '<div class="actions"><button class="btn primary" type="button" data-act="copy-sum" data-v="'+esc(txt)+'">Скопировать сумму</button><span class="grow"></span><button class="btn" type="button" data-act="close">Закрыть</button></div>');
+    +(all!==r2(tot)?'<div class="s">из них эти покупки: '+money(tot)+'.</div>':'')+(kz?'<p class="s">Отправлено в «Финансы»: '+money(kz.amount)+(kz.cat?' ('+esc(kz.cat)+')':'')+'. Трата появится там после синхронизации.</p>':'<p class="s">Внесите эту сумму в «Финансах» как расход, если нужно.</p>')+'</div>',
+    '<div class="actions" style="flex-wrap:wrap"><button class="btn primary" type="button" data-act="copy-sum" data-v="'+esc(txt)+'">Скопировать сумму</button>'
+    +(entries().some(e=>e.done)?'<button class="btn" type="button" data-act="fin-clear-done">Убрать купленное из списка</button>':'')
+    +(entries().some(e=>!e.done)?'<button class="btn" type="button" data-act="fin-clear-all">Очистить весь список</button>':'')
+    +'<span class="grow"></span><button class="btn" type="button" data-act="close">Закрыть</button></div>');
 }
 function openHist(id){
   const it=state.items.get(id);if(!it) return;
@@ -1014,7 +1176,9 @@ function histForm(){
 function histSave(){const o=histForm();if(!o) return;const it=state.items.get(o.id);if(JSON.stringify(o)!==JSON.stringify(it)) Persist.put('items',o)}
 function openEntry(eid){
   const e=state.list.get(eid);if(!e) return;const it=state.items.get(e.itemId);if(!it) return;
-  fs={kind:'entry',id:eid};const P=prefs.prices,cur=entryStore(e,it),ch=cheapest(it);
+  fs={kind:'entry',id:eid};
+  if(e.done){openSheet(esc(dn(it)),'<div class="form"><p class="s">Куплено'+(e.doneAt?' '+esc(e.doneAt):'')+', записано в историю и в статистику.</p><p class="s">«Убрать из списка» только прячет строку, история остаётся. «Отменить покупку» ещё и стирает её из истории.</p></div>','<div class="actions"><button class="btn" type="button" data-act="entry-del">Убрать из списка</button><span class="grow"></span><button class="btn danger" type="button" data-act="unbuy">Отменить покупку</button></div>');return}
+  const P=prefs.prices,cur=entryStore(e,it),ch=cheapest(it);
   const opts=sortedStores().map(st=>{const p=priceAt(it,st.id),has=it.prices&&st.id in it.prices;return '<option value="'+esc(st.id)+'"'+(st.id===cur?' selected':'')+'>'+esc(st.name)+(P&&has?' — '+money(p)+(ch&&ch.sid===st.id?' (дешевле всего)':''):'')+'</option>'}).join('');
   openSheet(esc(dn(it)),'<div class="form"><div class="field"><span>Количество ('+esc(it.unit||'шт')+')</span><div class="stp"><button class="btn" type="button" data-act="qty-d" data-d="-1">−</button><input id="e-qty" class="inp" type="text" inputmode="decimal" value="'+esc(e.qty||1)+'"><button class="btn" type="button" data-act="qty-d" data-d="1">+</button></div></div>'
     +'<label class="field"><span>Где покупаем</span><select id="e-store" class="inp"><option value="">Выбрать автоматически</option>'+opts+'</select></label>'
@@ -1034,6 +1198,32 @@ function renderPackSheet(){
     '<div class="actions">'+(fs.id?'<button class="btn danger" type="button" data-act="pack-del">Удалить</button>':'')+(fs.id?'<button class="btn" type="button" data-act="pack-list-sheet">В список</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="pack-save" data-primary="1">Сохранить</button></div>','p-name');
 }
 function syncPackFields(){const n=$('#p-name');if(n) fs.name=n.value;document.querySelectorAll('[data-pq]').forEach(i=>{const q=parseAmount(i.value);fs.items[Number(i.dataset.pq)].q=isFinite(q)&&q>0?q:1})}
+function openPackChooser(){
+  const ps=[...state.packs.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+  fs={kind:'packpick'};
+  openSheet('Выбрано товаров: '+ui.sel.size,'<div class="form"><p class="s">Добавить в существующий пак или создать новый.</p><div class="stack">'
+    +ps.map(p=>'<button class="btn" type="button" data-act="bulk-pack-to" data-id="'+esc(p.id)+'" style="justify-content:space-between;text-align:left">'+esc(p.name)+' <span class="s">'+(p.items||[]).length+' шт.</span></button>').join('')
+    +'<button class="btn primary" type="button" data-act="bulk-pack-to" data-id="">＋ Новый пак</button></div></div>','<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button></div>');
+}
+const EMOJI_PICK=['🥩','🍗','🐟','🥛','🧀','🥚','🍞','🍚','🍝','🥫','🧂','🍎','🍌','🥦','🥕','🍅','🍄','🥜','🍫','🍪','☕','🥤','🍷','🍺','🧊','🍱','🧸','🐾','💊','🧼','🧴','🧹','🗑️','🍽️','👕','👟','✏️','🔌','🔧','🏠','🚗','📚','⚽','🎁','🌷','🚬','📦','🛒'];
+function openCatSheet(name){
+  const s=state.settings,old=name||null;
+  fs={kind:'cat',old,icon:old?catIcon(old):'🏷️'};
+  openSheet(old?'Категория':'Новая категория','<div class="form"><label class="field"><span>Название</span><input id="c-name" class="inp" type="text" value="'+esc(old||'')+'" autocomplete="off"></label>'
+    +'<div class="row2"><label class="field"><span>Значок (эмодзи)</span><input id="c-icon" class="inp" type="text" value="'+esc(fs.icon)+'" maxlength="8" autocomplete="off"></label>'
+    +'<label class="field"><span>Номер в порядке (1–'+(s.cats.length+(old?0:1))+')</span><input id="c-pos" class="inp" type="text" inputmode="numeric" value="'+(old?s.cats.indexOf(old)+1:s.cats.length+1)+'" autocomplete="off"></label></div>'
+    +'<div class="chipbar" style="flex-wrap:wrap">'+EMOJI_PICK.map(e=>'<button class="fchip" type="button" data-act="emo-pick" data-v="'+e+'">'+e+'</button>').join('')+'</div>'
+    +(old?'<p class="s">Товаров в категории: '+[...state.items.values()].filter(it=>it.cat===old).length+'. При переименовании они переедут вместе с ней; при удалении останутся без категории.</p>':'')
+    +'<div class="err" id="c-err"></div></div>',
+    '<div class="actions">'+(old?'<button class="btn danger" type="button" data-act="cat-del2">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="cat-save" data-primary="1">Сохранить</button></div>','c-name');
+}
+function openProfileSheet(id){
+  const p=id?(state.settings.profiles||[]).find(q=>q.id===id):null;
+  fs={kind:'profile',id:p?p.id:null};
+  openSheet(p?'Список для другого человека':'Новый список для…','<div class="form"><p class="s">Отдельный список покупок, например для мамы. Покупки в нём не попадают в вашу статистику, запасы и кассу. Каталог товаров и цены общие.</p>'
+    +'<label class="field"><span>Для кого</span><input id="pf-name" class="inp" type="text" value="'+esc(p?p.name:'')+'" placeholder="Мама" autocomplete="off"></label><div class="err" id="pf-err"></div></div>',
+    '<div class="actions">'+(p?'<button class="btn danger" type="button" data-act="pf-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="pf-save" data-primary="1">Сохранить</button></div>','pf-name');
+}
 function openBulkEdit(){
   const s=state.settings;fs={kind:'bulk'};
   openSheet('Выбрано товаров: '+ui.sel.size,'<div class="form"><p class="s">Меняются только те поля, где вы что-то выбрали.</p>'
@@ -1090,13 +1280,13 @@ function readFileText(f){return new Promise((res,rej)=>{const r=new FileReader()
 async function handleFile(f){
   if(!f) return;let j;
   try{j=JSON.parse(await readFileText(f))}catch(e){return toast('Файл не читается: это не JSON')}
-  if(!j||j.app!=='moya-korzina') return toast('Это не похоже на файл «Моей корзины»');
+  if(!j||j.app!=='moya-korzina') return toast('Это не похоже на файл «Корзины»');
   fs={kind:'import',j};
   openSheet('Импорт из файла','<div class="form"><p class="s">В файле: товаров '+(j.items||[]).length+', паков '+(j.packs||[]).length+', магазинов '+(j.stores||[]).length+', покупок '+(j.buys||[]).length+'.</p><p class="s">«Добавить» объединит с текущими данными (одинаковые записи обновятся). «Заменить» удалит текущие.</p></div>',
     '<div class="actions"><button class="btn danger" type="button" data-act="import-do" data-m="replace">Заменить всё</button><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="import-do" data-m="merge" data-primary="1">Добавить</button></div>');
 }
 function wipeAll(){KINDS.forEach(k=>[...state[k].keys()].forEach(id=>Persist.del(k,id)))}
-/* ---------- sync (Supabase, общий с «Моей кассой») ---------- */
+/* ---------- sync (Supabase, общий с «Финансами») ---------- */
 const SYNC_KEY='moya-korzina-sync';
 const Sync={cfg:null,m:{},last:0,busy:false,t:0,again:false,err:'',at:0,timers:false,bh:''};
 window.Sync=Sync;
@@ -1158,7 +1348,7 @@ async function syncRun(){
   }catch(e){
     Sync.err=(e&&e.message)||'нет соединения';
     if(/Failed to fetch|NetworkError|Load failed/i.test(Sync.err)) Sync.err='нет соединения с интернетом';
-    else if(/Could not find the function|schema cache/i.test(Sync.err)) Sync.err='база не подготовлена. Выполните SQL из «Моей кассы» в Supabase';
+    else if(/Could not find the function|schema cache/i.test(Sync.err)) Sync.err='база не подготовлена. Выполните SQL из «Финансов» в Supabase';
     else if(/Invalid API key|JWT/i.test(Sync.err)) Sync.err='неверный ключ';
   }
   Sync.busy=false;syncUI();
@@ -1179,11 +1369,10 @@ function syncCard(){
   let b;
   if(Sync.cfg){
     b='<div class="set-sec"><div class="sync-st'+(Sync.err?' bad':'')+'">'+(Sync.err?'Ошибка: '+esc(Sync.err):(Sync.busy?'Синхронизация…':'Подключено. '+(Sync.at?'Последняя синхронизация в '+hm(Sync.at)+'.':'Идёт первая синхронизация…')))+'</div>'
-      +'<p class="s">Ждёт отправки: '+Object.keys(Sync.m).filter(k=>Sync.m[k][3]).length+'. Время на этом устройстве: '+new Date().toLocaleTimeString('ru')+'. Если оно сильно отличается от настоящего, правки с этого устройства могут проигрывать правкам с других. Включите автоматическое время в настройках телефона.</p>'
-      +'<p class="s">Изменения уходят в облако через секунду, чужие подтягиваются каждые 20 секунд и при открытии. Это то же облако, что у «Моей кассы», поэтому приложения видят друг друга.</p>'
+      +(Object.keys(Sync.m).filter(k=>Sync.m[k][3]).length?'<p class="s">Ждёт отправки: '+Object.keys(Sync.m).filter(k=>Sync.m[k][3]).length+'.</p>':'')
       +'<div class="actions"><button class="btn primary" type="button" data-act="sync-now">Синхронизировать сейчас</button><button class="btn" type="button" data-act="sync-force">Отправить всё с этого устройства</button><button class="btn" type="button" data-act="sync-code">Скопировать код</button><button class="btn danger" type="button" data-act="sync-off">Отключить</button></div></div>';
   }else{
-    b='<div class="set-sec"><p class="s">Проще всего подключиться к тому же облаку, что и «Моя касса»: в кассе откройте «Ещё → Синхронизация», нажмите «Скопировать код» и вставьте его сюда. Так оба приложения смогут обмениваться данными.</p>'
+    b='<div class="set-sec"><p class="s">Вставьте код из «Финансов» (Ещё → Синхронизация → Скопировать код).</p>'
       +'<label class="field"><span>Код подключения</span><textarea id="sy-code" class="inp" style="min-height:64px" placeholder="MK1.…" autocomplete="off"></textarea></label>'
       +'<div><button class="btn primary" type="button" data-act="sync-join">Подключиться</button></div>'
       +(Sync.err?'<div class="sync-st bad">'+esc(Sync.err)+'</div>':'')+'</div>';
@@ -1193,14 +1382,15 @@ function syncCard(){
 /* ---------- actions ---------- */
 const refreshCatalog=()=>{const c=$('#catlist');if(!c) return;c.innerHTML=catalogHTML();const n=$('#catcount');if(n) n.textContent='Найдено '+filtered().length+' из '+state.items.size};
 function quickAdd(){
-  const inp=$('#q-add');if(!inp) return;const v=inp.value.trim();if(!v) return;
+  const inp=$('#q-add');if(!inp) return;const v=cap(inp.value);if(!v) return;
   let it=findItemByName(v);
   commit(it?'Добавлено в список':'Новый товар и добавлено в список',()=>{
     if(!it){it={id:uid(),name:v,funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}};Persist.put('items',it)}
-    addToList(it.id,1);
+    addToList(it.id);
   });
   render(true);const n=$('#q-add');if(n) n.focus();
 }
+const tgl=(set,v)=>{if(v==='') set.clear();else if(set.has(v)) set.delete(v);else set.add(v)};
 const act={
   tab(el){setTab(el.dataset.t)},
   close(){closeSheet()},
@@ -1208,6 +1398,8 @@ const act={
   fold(el){const id=el.dataset.id;prefs.open[id]=!prefs.open[id];savePrefs();render(true)},
   add(){openItemForm(null)},
   'q-add'(){quickAdd()},
+  'sug-add'(el){const it=state.items.get(el.dataset.id);if(!it) return;commit('Добавлено в список',()=>addToList(it.id,Math.max(1,Math.ceil(need(it)))),{quiet:true})},
+  'sug-all'(){const arr=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id)&&grpOf(it)==='ess');if(!arr.length) return;commit('Нужное добавлено ('+arr.length+')',()=>arr.forEach(it=>addToList(it.id,Math.max(1,Math.ceil(need(it))))))},
   'short-add'(){
     const arr=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id));
     if(!arr.length) return toast('Всё, что нужно держать дома, уже есть или в списке');
@@ -1224,15 +1416,40 @@ const act={
   },
   'clear-done'(){const d=entries().filter(e=>e.done);commit('Купленное убрано из списка',()=>d.forEach(e=>Persist.del('list',e.id)))},
   group(el){ui.group=el.dataset.v;render(true)},
+  backdrop(){hideSheet()},
+  lmode(){ui.lMode=!ui.lMode;ui.lsel.clear();render(true)},
+  lsel(el){const id=el.dataset.id;if(ui.lsel.has(id)) ui.lsel.delete(id);else ui.lsel.add(id);render(true)},
+  'lsel-all'(){entries().forEach(e=>ui.lsel.add(e.id));render(true)},
+  'lsel-none'(){ui.lsel.clear();render(true)},
+  'lbulk-rm'(){const ids=[...ui.lsel];commit('Убрано из списка: '+ids.length,()=>ids.forEach(id=>{if(state.list.has(id)) Persist.del('list',id)}),{quiet:true});ui.lsel.clear();render(true)},
+  'lbulk-got'(){const ids=[...ui.lsel];commit('Отмечено',()=>ids.forEach(id=>{const e=state.list.get(id);if(e&&!e.done) Persist.put('list',Object.assign({},e,{got:true}))}),{quiet:true});ui.lsel.clear();render(true)},
+  'lbulk-ungot'(){const ids=[...ui.lsel];commit('Отметки сняты',()=>ids.forEach(id=>{const e=state.list.get(id);if(e&&e.got&&!e.done) Persist.put('list',Object.assign({},e,{got:false}))}),{quiet:true});ui.lsel.clear();render(true)},
+  'got-none'(){commit('Отметки сняты',()=>entries().forEach(e=>{if(e.got&&!e.done) Persist.put('list',Object.assign({},e,{got:false}))}),{quiet:true})},
+  'got-first'(){ui.gotFirst=!ui.gotFirst;render(true)},
+  'list-clear'(el){if(!entries().length) return;twoStep(el,'Точно очистить?',()=>{const all=entries();commit('Список очищен',()=>all.forEach(e=>Persist.del('list',e.id)),{quiet:true});ui.lsel.clear();render(true)})},
+  'funny-rm'(el){fs.funny.splice(Number(el.dataset.i),1);renderFunny()},
   buy(el){const e=state.list.get(el.dataset.id);if(!e) return;
-    if(e.done) commit('Возвращено в список',()=>unbuyEntry(e));
+    if(e.done){toast('Покупка уже в истории. Откройте строку, чтобы убрать её из списка или отменить покупку.');return}
     else commit(e.got?'Отметка снята':'Отмечено',()=>Persist.put('list',Object.assign({},e,{got:!e.got})),{quiet:true})},
   'got-all'(){commit('Всё отмечено',()=>entries().forEach(e=>{if(!e.done&&!e.got) Persist.put('list',Object.assign({},e,{got:true}))}),{quiet:true})},
   finish(){openFinish()},
   'finish-do'(){
     const g=entries().filter(e=>!e.done&&e.got);if(!g.length){closeSheet();return}
     const tot=g.reduce((s,e)=>s+(Number(e.qty)||1)*entryUnit(e,state.items.get(e.itemId)),0);
-    closeSheet();commit('Покупки записаны: '+g.length,()=>g.forEach(e=>buyEntry(e)));openFinished(g.length,tot);
+    let kz=null;
+    if($('#fk-on')){
+      prefs.toKassa=$('#fk-on').checked;
+      if(prefs.toKassa){
+        const am=parseAmount($('#fk-amt').value);if(!(am>0)){toast('Сумма для кассы введена неверно');return}
+        kz={amount:r2(am),who:$('#fk-who')?$('#fk-who').value:((state.bridge.people||[])[0]||{}).id||'',cat:$('#fk-cat')?$('#fk-cat').value:''};
+        prefs.kwho=kz.who;prefs.kcat=kz.cat;
+      }
+      savePrefs();
+    }
+    const clr=$('#fk-clear')?$('#fk-clear').checked:false;if($('#fk-clear')){prefs.autoClear=clr;savePrefs()}
+    closeSheet();
+    commit('Покупки записаны: '+g.length,()=>{g.forEach(e=>buyEntry(e));if(clr) g.forEach(e=>Persist.del('list',e.id));if(kz) Persist.put('outbox',{id:uid(),pid:state.bridge.pid||'',amount:kz.amount,date:todayISO(),who:kz.who,cat:kz.cat,desc:kz.cat||'Покупки'})},{quiet:true});
+    openFinished(g.length,tot,kz);
   },
   'copy-sum'(el){copyText(el.dataset.v,'Сумма скопирована')},
   'item-hist'(el){closeSheet();openHist(el.dataset.id)},
@@ -1245,12 +1462,14 @@ const act={
     if(!isFinite(pr)||pr<0) return ($('#h-err').textContent='Цена введена неверно.');
     const id=fs.id;
     commit('Добавлено покупок: '+n,()=>{histSave();const cur=state.items.get(id),q=Number(cur.fq)||1,today=todayISO();
-      for(let i=0;i<n;i++){const date=addD(today,-Math.round(i*(days-1)/Math.max(1,n-1)));Persist.put('buys',{id:uid(),entry:'',itemId:id,name:cur.name,cat:cur.cat||'',tag:cur.tag||'',date,qty:q,price:pr,sum:r2(q*pr),store:''})}},{quiet:true});
+      for(let i=0;i<n;i++){const date=addD(today,-Math.round(i*(days-1)/Math.max(1,n-1)));Persist.put('buys',{id:uid(),entry:'',itemId:id,name:cur.name,cat:cur.cat||'',tag:cur.tag||'',date,ts:(date===todayISO()?Date.now():new Date(date+'T12:00:00').getTime()),qty:q,price:pr,sum:r2(q*pr),store:''})}},{quiet:true});
     render(true);openHist(id);toast('Добавлено покупок: '+n);
   },
   'hist-del'(el){const id=fs.id,b=el.dataset.b;commit('Покупка убрана',()=>{histSave();Persist.del('buys',b)},{quiet:true});render(true);openHist(id)},
   'hist-clear'(el){twoStep(el,'Точно стереть?',()=>{const id=fs.id;commit('История товара стёрта',()=>{histSave();[...state.buys.values()].forEach(b=>{if(b.itemId===id) Persist.del('buys',b.id)})});render(true);openHist(id)})},
-  'buys-clear'(el){twoStep(el,'Точно стереть?',()=>{const d=el.dataset.d,from=d==='all'?'':addD(todayISO(),-(Number(d)-1));commit('История покупок стёрта',()=>{[...state.buys.values()].forEach(b=>{if(!from||b.date>=from) Persist.del('buys',b.id)})});render(true)})},
+  'buys-clear'(el){const sel=$('#erase-sel'),o=ERASE.find(e=>e[0]===(sel?sel.value:'h6'))||ERASE[4],h=o[2];
+    if(!buysIn(h)) return toast('За этот период покупок нет');
+    twoStep(el,'Точно стереть?',()=>{const lim=h==='all'?-1:Date.now()-Number(h)*3600e3;commit('История покупок стёрта',()=>{[...state.buys.values()].forEach(b=>{if(h==='all'||tsOf(b)>=lim) Persist.del('buys',b.id)})},{quiet:true});ui.eraseSel=o[0];render(true)})},
   entry(el){openEntry(el.dataset.id)},
   'qty-d'(el){const i=$('#e-qty'),v=parseAmount(i.value),n=Math.max(0.1,(isFinite(v)?v:1)+Number(el.dataset.d));i.value=r2(n)},
   'entry-save'(){
@@ -1258,16 +1477,19 @@ const act={
     const q=parseAmount($('#e-qty').value);if(!isFinite(q)||q<=0) return ($('#e-err').textContent='Введите количество больше нуля.');
     const sid=$('#e-store').value;closeSheet();commit('Запись изменена',()=>Persist.put('list',Object.assign({},e,{qty:q,store:sid})),{quiet:true});
   },
+  unbuy(el){twoStep(el,'Точно отменить покупку?',()=>{const id=fs.id,e=state.list.get(id);closeSheet();if(e) commit('Покупка отменена',()=>unbuyEntry(e),{quiet:true})})},
+  'fin-clear-done'(){closeSheet();const d=entries().filter(e=>e.done);commit('Купленное убрано из списка',()=>d.forEach(e=>Persist.del('list',e.id)),{quiet:true});render(true)},
+  'fin-clear-all'(el){twoStep(el,'Точно очистить?',()=>{closeSheet();const all=entries();commit('Список очищен',()=>all.forEach(e=>Persist.del('list',e.id)),{quiet:true});render(true)})},
   'entry-del'(){const id=fs.id;closeSheet();commit('Убрано из списка',()=>Persist.del('list',id))},
   item(el){closeSheet();openItemForm(el.dataset.id)},
   'item-save'(){saveItem()},
   'item-del'(){const id=fs.id,it=state.items.get(id);if(!it) return;closeSheet();commit('Товар удалён',()=>{[...state.list.values()].forEach(e=>{if(e.itemId===id) Persist.del('list',e.id)});[...state.packs.values()].forEach(p=>{if((p.items||[]).some(x=>x.id===id)) Persist.put('packs',Object.assign({},p,{items:p.items.filter(x=>x.id!==id)}))});Persist.del('items',id)})},
-  'to-list'(el){const id=el.dataset.id,e=inList(id);commit(e?'Убрано из списка':'Добавлено в список',()=>e?Persist.del('list',e.id):addToList(id,1))},
+  'to-list'(el){const id=el.dataset.id,e=inList(id);commit(e?'Убрано из списка':'Добавлено в список',()=>e?Persist.del('list',e.id):addToList(id))},
   sel(el){const id=el.dataset.id;if(ui.sel.has(id)) ui.sel.delete(id);else ui.sel.add(id);render(true)},
   'sel-mode'(){ui.selMode=!ui.selMode;ui.sel.clear();render(true)},
   'sel-all'(){filtered().forEach(it=>ui.sel.add(it.id));render(true)},
   'sel-none'(){ui.sel.clear();render(true)},
-  'bulk-list'(){const ids=[...ui.sel];commit('В список добавлено: '+ids.length,()=>ids.forEach(id=>addToList(id,1)));ui.sel.clear();ui.selMode=false;render(true)},
+  'bulk-list'(){const ids=[...ui.sel];commit('В список добавлено: '+ids.length,()=>ids.forEach(id=>addToList(id)));ui.sel.clear();ui.selMode=false;render(true)},
   'bulk-edit'(){openBulkEdit()},
   'bulk-save'(){
     const cat=$('#b-cat').value,tag=$('#b-tag').value,sid=$('#b-store').value,pv=$('#b-price').value.trim(),main=$('#b-main').checked;
@@ -1282,10 +1504,51 @@ const act={
     }));
     ui.sel.clear();ui.selMode=false;render(true);
   },
-  'bulk-pack'(){openPackForm(null,[...ui.sel].map(id=>({id,q:1})))},
+  'bulk-pack'(){if(state.packs.size) openPackChooser();else openPackForm(null,[...ui.sel].map(id=>({id,q:1})))},
+  'bulk-pack-to'(el){const pid=el.dataset.id,ids=[...ui.sel];
+    if(!pid){closeSheet();openPackForm(null,ids.map(id=>({id,q:1})));return}
+    const p=state.packs.get(pid);if(!p) return closeSheet();
+    const items=(p.items||[]).slice();let n=0;ids.forEach(id=>{if(!items.some(x=>x.id===id)){items.push({id,q:1});n++}});
+    closeSheet();commit('Добавлено в пак «'+p.name+'»: '+n,()=>Persist.put('packs',Object.assign({},p,{items})),{quiet:true});
+    ui.sel.clear();ui.selMode=false;render(true);toast('В пак «'+p.name+'» добавлено: '+n);},
+  'items-unlist'(){const open=[...state.list.values()].filter(e=>!e.done&&(e.pf||'')===curPf());if(!open.length) return;commit('Список очищен',()=>open.forEach(e=>Persist.del('list',e.id)),{quiet:true});render(true)},
+  iview(el){prefs.iview=el.dataset.v==='blocks'?'blocks':'list';ui.blkEdit=false;savePrefs();render(true)},
+  'blk-open'(el){ui.cats.clear();if(el.dataset.v) ui.cats.add(el.dataset.v);else ui.cats.add('');prefs.iview='list';savePrefs();ui.limit=100;render(true);window.scrollTo(0,0)},
+  'blk-edit'(){ui.blkEdit=!ui.blkEdit;render(true)},
+  'blk-edit-one'(el){openCatSheet(el.dataset.v)},
+  'blk-new'(){openCatSheet(null)},
+  'emo-pick'(el){const i=$('#c-icon');if(i) i.value=el.dataset.v},
+  'cat-save'(){
+    const pos0=$('#c-pos')?$('#c-pos').value:'',nm=$('#c-name').value.trim(),ic0=($('#c-icon').value||'').trim()||'🏷️',old=fs.old;
+    if(!nm) return ($('#c-err').textContent='Введите название.');
+    if(nm!==old&&state.settings.cats.includes(nm)) return ($('#c-err').textContent='Такая категория уже есть.');
+    closeSheet();
+    commit(old?'Категория изменена':'Категория добавлена',()=>{
+      Persist.settings(s=>{s.catIcons=Object.assign({},s.catIcons);
+        let arr=old?s.cats.map(c=>c===old?nm:c):s.cats.concat([nm]);if(old&&old!==nm) delete s.catIcons[old];
+        const pos=parseInt(pos0,10);if(pos>=1&&pos<=arr.length){arr=arr.filter(c=>c!==nm);arr.splice(pos-1,0,nm)}
+        s.cats=arr;s.catIcons[nm]=ic0});
+      if(old&&old!==nm) state.items.forEach(it=>{if(it.cat===old) Persist.put('items',Object.assign({},it,{cat:nm}))});
+    },{quiet:true});
+    if(old&&old!==nm&&ui.cats.has(old)){ui.cats.delete(old);ui.cats.add(nm)}
+    render(true)},
+  'cat-del2'(el){twoStep(el,'Точно удалить?',()=>{const old=fs.old;closeSheet();
+    commit('Категория удалена',()=>{Persist.settings(s=>{s.cats=s.cats.filter(c=>c!==old)});state.items.forEach(it=>{if(it.cat===old) Persist.put('items',Object.assign({},it,{cat:''}))})},{quiet:true});
+    ui.cats.delete(old);render(true)})},
+  'pf-set'(el){prefs.pf=el.dataset.v;savePrefs();ui.lsel.clear();ui.lMode=false;render(true)},
+  'pf-new'(){openProfileSheet(null)},
+  'pf-edit'(){openProfileSheet(curPf())},
+  'pf-save'(){const nm=$('#pf-name').value.trim();if(!nm) return ($('#pf-err').textContent='Введите имя.');
+    const edit=!!fs.id,id=fs.id||uid();closeSheet();
+    commit(edit?'Профиль изменён':'Профиль добавлен',()=>Persist.settings(s=>{const l=(s.profiles||[]).slice();const i=l.findIndex(p=>p.id===id);if(i>=0) l[i]=Object.assign({},l[i],{name:nm});else l.push({id,name:nm});s.profiles=l}),{quiet:true});
+    prefs.pf=id;savePrefs();render(true)},
+  'pf-del'(el){twoStep(el,'Точно удалить?',()=>{const id=fs.id;closeSheet();
+    commit('Профиль удалён',()=>{Persist.settings(s=>{s.profiles=(s.profiles||[]).filter(p=>p.id!==id)});
+      [...state.list.values()].forEach(e=>{if(e.pf===id) Persist.del('list',e.id)});[...state.buys.values()].forEach(b=>{if(b.pf===id) Persist.del('buys',b.id)})},{quiet:true});
+    prefs.pf='';savePrefs();render(true)})},
   'bulk-del'(el){twoStep(el,'Точно удалить?',()=>{const ids=[...ui.sel];commit('Удалено товаров: '+ids.length,()=>ids.forEach(id=>{[...state.list.values()].forEach(e=>{if(e.itemId===id) Persist.del('list',e.id)});Persist.del('items',id)}));ui.sel.clear();ui.selMode=false;render(true)})},
-  'f-cat'(el){ui.cat=el.dataset.v;ui.limit=100;render(true)},'f-tag'(el){ui.tag=el.dataset.v;ui.limit=100;render(true)},
-  'f-store'(el){ui.store=el.dataset.v;ui.limit=100;render(true)},'f-only'(el){ui.only=el.dataset.v;ui.limit=100;render(true)},
+  'f-cat'(el){tgl(ui.cats,el.dataset.v);ui.limit=100;render(true)},'f-tag'(el){tgl(ui.tags,el.dataset.v);ui.limit=100;render(true)},
+  'f-store'(el){tgl(ui.stores,el.dataset.v);ui.limit=100;render(true)},'f-only'(el){ui.only=el.dataset.v;ui.limit=100;render(true)},
   'f-sort'(el){ui.sort=el.dataset.v;render(true)},
   'est-toggle'(el){const it=state.items.get(el.dataset.id);if(!it) return;commit(it.noEst?'Товар снова учитывается':'Товар не учитывается в оценке',()=>Persist.put('items',Object.assign({},it,{noEst:!it.noEst})),{quiet:true})},
   cut(el){const id=el.dataset.id;commit('Убрано из списка',()=>Persist.del('list',id))},
@@ -1308,7 +1571,7 @@ const act={
   'pack-del'(el){twoStep(el,'Точно удалить?',()=>{const id=fs.id;closeSheet();commit('Пак удалён',()=>Persist.del('packs',id))})},
   'pack-list-sheet'(){syncPackFields();const id=fs.id;closeSheet();addPackToList(id)},
   't-period'(el){ui.period=el.dataset.v;render(true)},'t-metric'(el){ui.metric=el.dataset.v;render(true)},
-  mode(el){commit('Названия: '+MODES.find(m=>m[0]===el.dataset.v)[1],()=>Persist.settings(s=>{s.nameMode=el.dataset.v}),{quiet:true});render(true)},
+  mode(el){commit('Названия: '+(modes().find(m=>m[0]===el.dataset.v)||['','Альт.'])[1],()=>Persist.settings(s=>{s.nameMode=el.dataset.v}),{quiet:true});render(true)},
   'names-toggle'(){
     const cur=state.settings.nameMode;
     commit(cur==='normal'?'Смешные названия':'Обычные названия',()=>Persist.settings(s=>{s.nameMode=cur==='normal'?(prefs.lastFunny||'f0'):'normal';if(cur!=='normal') prefs.lastFunny=cur}),{quiet:true});
@@ -1316,11 +1579,11 @@ const act={
   },
   'price-toggle'(){prefs.prices=!prefs.prices;savePrefs();toast(prefs.prices?'Цены показаны':'Цены скрыты');render(true)},
   'cat-add'(){const i=$('#cat-add'),v=i.value.trim();if(!v) return;if(state.settings.cats.includes(v)) return toast('Такая категория уже есть');commit('Категория добавлена',()=>Persist.settings(s=>{s.cats.push(v)}),{quiet:true});render(true);const n=$('#cat-add');if(n) n.focus()},
-  'cat-del'(el){const n=el.dataset.n;commit('Категория удалена',()=>Persist.settings(s=>{s.cats=s.cats.filter(c=>c!==n)}),{quiet:true});if(ui.cat===n) ui.cat='';render(true)},
+  'cat-del'(el){const n=el.dataset.n;commit('Категория удалена',()=>Persist.settings(s=>{s.cats=s.cats.filter(c=>c!==n)}),{quiet:true});ui.cats.delete(n);render(true)},
   'tag-add'(){const i=$('#tag-add'),v=i.value.trim();if(!v) return;commit('Метка добавлена',()=>Persist.settings(s=>{s.tags.push({id:uid(),name:v,c:s.tags.length%6})}),{quiet:true});render(true);const n=$('#tag-add');if(n) n.focus()},
-  'tag-del'(el){const id=el.dataset.id;if(state.settings.tags.length<2) return toast('Нужна хотя бы одна метка');commit('Метка удалена',()=>Persist.settings(s=>{s.tags=s.tags.filter(t=>t.id!==id)}),{quiet:true});if(ui.tag===id) ui.tag='';render(true)},
+  'tag-del'(el){const id=el.dataset.id;if(state.settings.tags.length<2) return toast('Нужна хотя бы одна метка');commit('Метка удалена',()=>Persist.settings(s=>{s.tags=s.tags.filter(t=>t.id!==id)}),{quiet:true});ui.tags.delete(id);render(true)},
   'store-add'(){const i=$('#store-add'),v=i.value.trim();if(!v) return;if([...state.stores.values()].some(s=>norm(s.name)===norm(v))) return toast('Такой магазин уже есть');commit('Магазин добавлен',()=>Persist.put('stores',{id:uid(),name:v}),{quiet:true});render(true);const n=$('#store-add');if(n) n.focus()},
-  'store-del'(el){const id=el.dataset.id;commit('Магазин удалён',()=>{[...state.items.values()].forEach(it=>{if((it.prices&&id in it.prices)||it.store===id){const n=Object.assign({},it,{prices:Object.assign({},it.prices||{}),store:it.store===id?'':it.store});delete n.prices[id];Persist.put('items',n)}});[...state.list.values()].forEach(e=>{if(e.store===id) Persist.put('list',Object.assign({},e,{store:''}))});Persist.del('stores',id)});if(ui.store===id) ui.store='';render(true)},
+  'store-del'(el){const id=el.dataset.id;ui.stores.delete(id);commit('Магазин удалён',()=>{[...state.items.values()].forEach(it=>{if((it.prices&&id in it.prices)||it.store===id){const n=Object.assign({},it,{prices:Object.assign({},it.prices||{}),store:it.store===id?'':it.store});delete n.prices[id];Persist.put('items',n)}});[...state.list.values()].forEach(e=>{if(e.store===id) Persist.put('list',Object.assign({},e,{store:''}))});Persist.del('stores',id)});if(ui.store===id) ui.store='';render(true)},
   'key-set'(el){ui.capturing=ui.capturing===el.dataset.id?null:el.dataset.id;render(true)},
   'keys-reset'(){prefs.keys={};savePrefs();toast('Горячие клавиши сброшены');render(true)},
   export(){doExport()},
@@ -1338,7 +1601,7 @@ const act={
   wipe(el){twoStep(el,'Точно удалить всё?',()=>{commit('Все данные удалены',()=>wipeAll());render(true)})},
   help(){openHelp()},
   async 'sync-join'(){
-    const c=syncParse($('#sy-code').value);if(!c) return toast('Код не распознан. Скопируйте его целиком в «Моей кассе».');
+    const c=syncParse($('#sy-code').value);if(!c) return toast('Код не распознан. Скопируйте его целиком в «Финансах».');
     const prev=Sync.cfg;Sync.cfg=c;let rows;
     try{rows=await syncCall('kassa_pull',{p_room:c.r,p_since:0})}catch(e){Sync.cfg=prev;return toast('Не получилось: '+((e&&e.message)||'нет соединения'))}
     Sync.m={};Sync.last=0;
@@ -1354,10 +1617,15 @@ const act={
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled) return;const f=act[el.dataset.act];if(f) f(el,e)});
 document.addEventListener('input',e=>{
   const t=e.target;
-  if(t.id==='q'){ui.q=t.value;ui.limit=100;refreshCatalog()}
+  if(t.id==='q'){const was=!!ui.q;ui.q=t.value;ui.limit=100;if(prefs.iview==='blocks'&&(was!==!!ui.q)){render(true);const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}else refreshCatalog()}
 });
 document.addEventListener('change',e=>{
   const el=e.target;
+  if(el.id==='b-cols'){prefs.bcols=el.value;savePrefs();render(true);return}
+  if(el.id==='b-sort'){prefs.bsort=el.value;savePrefs();render(true);return}
+  if(el.id==='b-hide'){prefs.bhide=el.checked;savePrefs();render(true);return}
+  if(el.id==='erase-sel'){ui.eraseSel=el.value;return}
+  if(el.id==='fk-on'){const bx=$('#fk-box');if(bx) bx.hidden=!el.checked;return}
   if(el.id==='imp-file'){const f=el.files&&el.files[0];el.value='';handleFile(f);return}
   if(el.dataset&&el.dataset.sn){const v=el.value.trim(),s=state.stores.get(el.dataset.sn);if(s&&v&&v!==s.name) commit('Магазин переименован',()=>Persist.put('stores',Object.assign({},s,{name:v})),{quiet:true});else if(s) el.value=s.name;return}
   if(el.dataset&&el.dataset.tg){const id=el.dataset.tg,v=el.value;commit('Метка изменена',()=>Persist.settings(s=>{const t=s.tags.find(x=>x.id===id);if(t) t.grp=v}),{quiet:true});syncKick();return}
@@ -1385,6 +1653,7 @@ document.addEventListener('keydown',e=>{
   const inField=t&&(t.isContentEditable||/^(INPUT|TEXTAREA|SELECT)$/.test(tag));
   const c=comboFromEvent(e);
   if(modalOpen){
+    if(e.key==='Enter'&&t&&t.id==='i-funny-in'){e.preventDefault();addFunny();return}
     if(e.key==='Escape'){closeSheet();return}
     const prim=$('#sheet [data-primary]');
     const saveKey=c&&ACTIONS.some(a=>a.ctx==='modal'&&keyOf(a)===c)&&!/^(BUTTON|TEXTAREA|A)$/.test(tag);
@@ -1418,7 +1687,10 @@ document.addEventListener('keydown',e=>{
   window.addEventListener('dragleave',e=>{if(!hasFiles(e)) return;depth=Math.max(0,depth-1);if(!depth) ov.hidden=true});
   window.addEventListener('drop',e=>{if(!hasFiles(e)) return;e.preventDefault();depth=0;ov.hidden=true;const f=e.dataTransfer.files&&e.dataTransfer.files[0];handleFile(f)});
 })();
-loadPrefs();loadLocal();syncInit();render();
+loadPrefs();if(prefs.tab&&TABS.indexOf(prefs.tab)>=0) ui.tab=prefs.tab;
+loadLocal();syncInit();render();
+(function(){const y=(prefs.scr||{})[ui.tab]||0;if(y){requestAnimationFrame(()=>window.scrollTo(0,y));setTimeout(()=>window.scrollTo(0,y),300)}
+  let st=0;window.addEventListener('scroll',()=>{clearTimeout(st);st=setTimeout(()=>{prefs.scr=prefs.scr||{};prefs.scr[ui.tab]=Math.round(window.scrollY);savePrefs()},250)},{passive:true})})();
 
 })();
 </script>
