@@ -341,6 +341,8 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
 .chipbar{touch-action:pan-x pan-y;overscroll-behavior-x:contain}
 .tiles.c1 .tile{flex-direction:row;justify-content:flex-start;gap:12px;min-height:56px;padding:8px 14px;text-align:left}.tiles.c1 .tile .tn{flex:1}.tiles.dense .tile{min-height:76px;padding:8px 4px}.tiles.dense .te{font-size:24px}.tiles.dense .tn{font-size:11px}
 .tile .tn{overflow-wrap:anywhere}.tile .tno{position:absolute;top:5px;left:8px;font-size:11px;font-weight:700;color:var(--accent)}
+.varbtn{width:100%;text-align:left;justify-content:flex-start;white-space:normal;height:auto;min-height:44px;padding:10px 12px;font-weight:600}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) 120px 44px;gap:8px;align-items:center;margin-bottom:8px}.vhead{margin-bottom:4px}
 .altchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.altchips:empty{display:none}
 .altchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 4px 4px 12px;font-size:13px;font-weight:600}
 .altchip button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;width:24px;height:24px;border-radius:50%;cursor:pointer}
@@ -624,11 +626,14 @@ function cheapest(it){let b=null;for(const sid in (it.prices||{})){if(!state.sto
 const mainStore=it=>(it.store&&state.stores.has(it.store))?it.store:((cheapest(it)||{}).sid||'');
 const basePrice=it=>priceAt(it,mainStore(it));
 const entryStore=(e,it)=>(e.store&&state.stores.has(e.store))?e.store:mainStore(it);
-const entryUnit=(e,it)=>priceAt(it,entryStore(e,it));
+const vlist=it=>(it&&it.vars||[]).map(v=>typeof v==='string'?{n:v,p:0,hi:0}:v);
+const vget=(it,n)=>n?vlist(it).find(v=>v.n===n):null;
+const vprice=v=>v&&Number(v.p)>0?{lo:Number(v.p),hi:Number(v.hi)>Number(v.p)?Number(v.hi):Number(v.p)}:null;
+const entryUnit=(e,it)=>{const g=vprice(vget(it,e.v));return g?g.lo:priceAt(it,entryStore(e,it))};
 const parsePriceRange=v=>{const m=String(v||'').replace(/\u00a0/g,' ').match(/^\s*([\d\s.,]+?)\s*[-–—]\s*([\d\s.,]+?)\s*$/);if(!m) return null;const a=parseAmount(m[1]),b=parseAmount(m[2]);return isFinite(a)&&isFinite(b)&&a>0&&b>0?{lo:Math.min(a,b),hi:Math.max(a,b)}:null};
 function priceHiAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0){const h=it.pricesHi?Number(it.pricesHi[sid]):0;return h>p?h:p}const lo=Number(it.price)||0,hi=Number(it.pmax)||0;return lo>0?(hi>lo?hi:lo):0}
 const baseHi=it=>priceHiAt(it,mainStore(it));
-const entryHi=(e,it)=>priceHiAt(it,entryStore(e,it));
+const entryHi=(e,it)=>{const g=vprice(vget(it,e.v));return g?g.hi:priceHiAt(it,entryStore(e,it))};
 const mrange=(lo,hi)=>hi>lo+0.5?nfm(r2(lo))+'–'+money(hi):money(lo);
 const curPf=()=>prefs.pf&&(state.settings.profiles||[]).some(p=>p.id===prefs.pf)?prefs.pf:'';
 const mainBuys=()=>[...state.buys.values()].filter(b=>!b.pf);
@@ -1116,31 +1121,59 @@ function setTab(t){
 const optList=(arr,sel,first)=>(first==null?'':'<option value="">'+first+'</option>')+arr.map(x=>{const v=typeof x==='string'?x:x.id,l=typeof x==='string'?x:x.name;return '<option value="'+esc(v)+'"'+(v===sel?' selected':'')+'>'+esc(l)+'</option>'}).join('');
 const sortedStores=()=>[...state.stores.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
 function openItemForm(id,pre){
-  const it=id?state.items.get(id):null,s=state.settings,x=it||Object.assign({name:'',funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}},pre||{});
-  fs={kind:'item',id:id||null,funny:((it?it.funny:(pre&&pre.funny))||[]).slice(),vars:((it?it.vars:(pre&&pre.vars))||[]).slice()};
-  const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'" placeholder="нет / 100 / 100–150" value="'+esc(x.prices&&x.prices[st.id]>0?(x.pricesHi&&x.pricesHi[st.id]>x.prices[st.id]?x.prices[st.id]+'–'+x.pricesHi[st.id]:x.prices[st.id]):'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
+  const it=id?state.items.get(id):null,s=state.settings,x=Object.assign({},it||{name:'',funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}},pre||{});
+  fs={kind:'item',id:id||null,funny:(x.funny||[]).slice(),vars:vlist({vars:x.vars}).map(v=>Object.assign({},v))};
+  const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'"  value="'+esc(x.prices&&x.prices[st.id]>0?(x.pricesHi&&x.pricesHi[st.id]>x.prices[st.id]?x.prices[st.id]+'–'+x.pricesHi[st.id]:x.prices[st.id]):'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
   const body='<div class="form"><label class="field"><span>Название (нормальное)</span><input id="i-name" class="inp" type="text" value="'+esc(x.name)+'" autocomplete="off" placeholder="Хлеб"></label>'
     +'<div class="field"><span>Альт. названия (впишите вариант и нажмите Enter)</span><div id="i-funny-chips" class="altchips"></div><input id="i-funny-in" class="inp" type="text" autocomplete="off"></div>'
-    +'<div class="field"><span>Разновидности (необязательно): впишите и нажмите Enter</span><div id="i-vars-chips" class="altchips"></div><input id="i-vars-in" class="inp" type="text" autocomplete="off"><span class="s">Например, у хлеба: ржаной, сырный. При добавлении в список я спрошу, какой нужен, а в каталоге останется один «Хлеб».</span></div>'
+    +'<div class="field"><span>Разновидности</span><button class="btn varbtn" type="button" data-act="vars-open">'+(fs.vars.length?esc(fs.vars.map(v=>v.n+(v.p>0?' · '+(v.hi>v.p?v.p+'–'+v.hi:v.p):'')).join(', ')):'Добавить разновидности')+'</button></div>'
     +'<div class="row2"><label class="field"><span>Категория</span><select id="i-cat" class="inp">'+optList(s.cats.concat(x.cat&&s.cats.indexOf(x.cat)<0?[x.cat]:[]),x.cat,'Без категории')+'</select></label>'
     +'<label class="field"><span>Метка</span><select id="i-tag" class="inp">'+optList(s.tags,x.tag,'Без метки')+'</select></label></div>'
     +'<div class="row2"><label class="field"><span>Есть сейчас</span><input id="i-have" class="inp" type="text" inputmode="decimal" value="'+esc(x.have||'')+'" placeholder="0"></label>'
     +'<label class="field"><span>Хочу держать не меньше</span><input id="i-min" class="inp" type="text" inputmode="decimal" value="'+esc(x.min||'')+'" placeholder="0"></label></div>'
     +'<div class="row2"><label class="field"><span>Единица</span><select id="i-unit" class="inp">'+optList(UNITS,x.unit||'шт')+'</select></label>'
-    +'<label class="field"><span>Обычная цена ('+esc(s.currency)+'), можно диапазоном</span><input id="i-price" class="inp" type="text" inputmode="decimal" value="'+esc(x.pmax>x.price&&x.price>0?x.price+'–'+x.pmax:(x.price||''))+'" placeholder="100 или диапазон 100–150"></label></div>'
+    +'<label class="field"><span>Обычная цена ('+esc(s.currency)+'), можно диапазоном</span><input id="i-price" class="inp" type="text" inputmode="decimal" value="'+esc(x.pmax>x.price&&x.price>0?x.price+'–'+x.pmax:(x.price||''))+'"></label></div>'
     +'<label class="field"><span>Основной магазин</span><select id="i-store" class="inp">'+optList(sortedStores(),x.store,'Выбрать автоматически (самый дешёвый)')+'</select></label>'
     +'<div><div class="lbl" style="margin-bottom:6px">Цены по магазинам (где можем купить)</div>'+sp+'</div>'+(it?'<div class="actions"><button class="btn" type="button" data-act="item-hist" data-id="'+esc(it.id)+'">История покупок и частота</button></div>':'')+'<div class="err" id="i-err" role="alert"></div></div>';
-  openSheet(it?'Товар':'Новый товар',body,'<div class="actions">'+(it?'<button class="btn danger" type="button" data-act="item-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="item-save" data-primary="1">Сохранить</button></div>','i-name');renderFunny();renderVars();
+  openSheet(it?'Товар':'Новый товар',body,'<div class="actions">'+(it?'<button class="btn danger" type="button" data-act="item-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="item-save" data-primary="1">Сохранить</button></div>','i-name');renderFunny();
 }
 const cap=v=>{v=String(v||'').trim();return v?v.charAt(0).toUpperCase()+v.slice(1):v};
 function renderFunny(){const el=$('#i-funny-chips');if(!el||!fs||!fs.funny) return;el.innerHTML=fs.funny.map((f,i)=>'<span class="altchip">'+esc(f)+'<button type="button" data-act="funny-rm" data-i="'+i+'" aria-label="Убрать">×</button></span>').join('')}
-function renderVars(){const el=$('#i-vars-chips');if(!el||!fs||!fs.vars) return;el.innerHTML=fs.vars.map((f,i)=>'<span class="altchip">'+esc(f)+'<button type="button" data-act="var-rm" data-i="'+i+'" aria-label="Убрать">×</button></span>').join('')}
-function addVar(){const el=$('#i-vars-in');if(!el||!fs||!fs.vars) return;const v=cap(el.value);el.value='';if(!v) return;if(!fs.vars.some(f=>f.toLowerCase()===v.toLowerCase())) fs.vars.push(v);renderVars()}
+function itemFields(){
+  const num=v=>{v=String(v).trim();if(!v) return 0;const n=parseAmount(v);return isFinite(n)&&n>=0?n:0};
+  const rg=parsePriceRange($('#i-price').value),prices={},pricesHi={};
+  document.querySelectorAll('[data-sp]').forEach(i=>{const g=parsePriceRange(i.value),p=g?g.lo:num(i.value);if(p>0){prices[i.dataset.sp]=p;if(g) pricesHi[i.dataset.sp]=g.hi}});
+  return {name:$('#i-name').value,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi};
+}
+function openVarEdit(){
+  const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();
+  const pre=itemFields();pre.vars=fs.vars;
+  fs={kind:'varedit',id:fs.id,pre,rows:fs.vars.map(v=>Object.assign({},v))};if(!fs.rows.length) fs.rows.push({n:'',p:0,hi:0});
+  renderVarEdit();
+}
+function varRow(v,i){const t=v.p>0?(v.hi>v.p?v.p+'–'+v.hi:String(v.p)):'';
+  return '<div class="vrow"><input class="inp" type="text" data-vn="'+i+'" value="'+esc(v.n)+'" autocomplete="off"><input class="inp" type="text" inputmode="decimal" data-vp="'+i+'" value="'+esc(t)+'" autocomplete="off"><button class="btn" type="button" data-act="vrow-rm" data-i="'+i+'" aria-label="Убрать">×</button></div>'}
+function readVarRows(){
+  if(!document.querySelector('[data-vn]')) return;
+  fs.rows=[...document.querySelectorAll('[data-vn]')].map((el,i)=>{const t=document.querySelector('[data-vp="'+i+'"]').value.trim(),g=parsePriceRange(t),n=g?g.lo:parseAmount(t);
+    return {n:cap(el.value),p:g?g.lo:(isFinite(n)&&n>0?n:0),hi:g?g.hi:0}});
+}
+function renderVarEdit(focusLast){
+  const it=fs.id?state.items.get(fs.id):null,nm=cap(fs.pre.name)||'Товар';
+  openSheet('Разновидности: '+esc(nm),'<div class="form"><div class="vrow vhead"><span class="s">Название</span><span class="s">Цена, можно диапазоном</span><span></span></div><div id="v-rows">'+fs.rows.map(varRow).join('')+'</div>'
+    +'<div class="actions"><button class="btn" type="button" data-act="vrow-add">＋ Ещё</button></div><p class="s">Если цена не указана, берётся цена товара. В каталоге всё это остаётся одним товаром.</p></div>',
+    '<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="vars-cancel">Назад</button><button class="btn primary" type="button" data-act="vars-ok" data-primary="1">Готово</button></div>');
+  if(focusLast) setTimeout(()=>{const a=document.querySelectorAll('[data-vn]');if(a.length) a[a.length-1].focus()},170);
+}
+function varsBack(keep){
+  readVarRows();const seen=new Set(),vars=keep?fs.rows.filter(v=>v.n&&!seen.has(v.n.toLowerCase())&&seen.add(v.n.toLowerCase())):fs.pre.vars;
+  const id=fs.id,pre=Object.assign({},fs.pre,{vars});openItemForm(id,pre);
+}
 function askVariant(id){const it=state.items.get(id);if(!it) return;fs={kind:'varpick',id,sel:[]};renderVarPick()}
 function renderVarPick(){
   const it=state.items.get(fs.id);if(!it) return closeSheet();
   const inL=new Set(entries().filter(e=>e.itemId===it.id&&!e.done).map(e=>e.v||''));
-  openSheet(esc(dn(it)),'<div class="form"><p class="s">Какой нужен? Можно выбрать несколько.</p><div class="chipbar" style="flex-wrap:wrap">'+(it.vars||[]).map((v,i)=>fchip(fs.sel.indexOf(i)>=0,'var-tgl',String(i),v+(inL.has(v)?' ✓':''))).join('')+'</div></div>',
+  openSheet(esc(dn(it)),'<div class="form"><p class="s">Какой нужен? Можно выбрать несколько.</p><div class="chipbar" style="flex-wrap:wrap">'+vlist(it).map((v,i)=>fchip(fs.sel.indexOf(i)>=0,'var-tgl',String(i),v.n+(v.p>0?' · '+(v.hi>v.p?v.p+'–'+v.hi:v.p):'')+(inL.has(v.n)?' ✓':''))).join('')+'</div></div>',
     '<div class="actions"><button class="btn" type="button" data-act="var-any">Неважно</button><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="var-ok" data-primary="1"'+(fs.sel.length?'':' disabled')+'>Добавить</button></div>');
 }
 function addFunny(){
@@ -1150,14 +1183,14 @@ function addFunny(){
   renderFunny();
 }
 function saveItem(){
-  const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();const pv=$('#i-vars-in');if(pv&&pv.value.trim()) addVar();const name=cap($('#i-name').value);if(!name) return ($('#i-err').textContent='Введите название.');
+  const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();const name=cap($('#i-name').value);if(!name) return ($('#i-err').textContent='Введите название.');
   const old=fs.id?state.items.get(fs.id):null,dup=findItemByName(name);
   if(dup&&(!old||dup.id!==old.id)) return ($('#i-err').textContent='Такой товар уже есть: '+dup.name+'.');
   const num=v=>{v=String(v).trim();if(!v) return 0;const n=parseAmount(v);return isFinite(n)&&n>=0?n:0};
   const rg=parsePriceRange($('#i-price').value);
   const prices={},pricesHi={};document.querySelectorAll('[data-sp]').forEach(i=>{const g=parsePriceRange(i.value),p=g?g.lo:num(i.value);if(p>0){prices[i.dataset.sp]=p;if(g) pricesHi[i.dataset.sp]=g.hi}});
   if(old&&old.prices) for(const k in old.prices) if(!state.stores.has(k)){prices[k]=old.prices[k];if(old.pricesHi&&old.pricesHi[k]) pricesHi[k]=old.pricesHi[k]}
-  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi,vars:fs.vars.slice()});
+  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi,vars:fs.vars.filter(v=>v.n)});
   closeSheet();commit(old?'Товар изменён':'Товар добавлен',()=>Persist.put('items',o));
 }
 function kassaBox(tot){
@@ -1241,7 +1274,7 @@ function openEntry(eid){
   const opts=sortedStores().map(st=>{const p=priceAt(it,st.id),has=it.prices&&st.id in it.prices;return '<option value="'+esc(st.id)+'"'+(st.id===cur?' selected':'')+'>'+esc(st.name)+(P&&has?' — '+mrange(p,priceHiAt(it,st.id))+(ch&&ch.sid===st.id?' (дешевле всего)':''):'')+'</option>'}).join('');
   openSheet(esc(dn(it)),'<div class="form"><div class="field"><span>Количество ('+esc(it.unit||'шт')+')</span><div class="stp"><button class="btn" type="button" data-act="qty-d" data-d="-1">−</button><input id="e-qty" class="inp" type="text" inputmode="decimal" value="'+esc(e.qty||1)+'"><button class="btn" type="button" data-act="qty-d" data-d="1">+</button></div></div>'
     +'<label class="field"><span>Где покупаем</span><select id="e-store" class="inp"><option value="">Выбрать автоматически</option>'+opts+'</select></label>'
-    +((it.vars||[]).length||e.v?'<label class="field"><span>Разновидность</span><select id="e-var" class="inp"><option value="">Неважно</option>'+((it.vars||[]).indexOf(e.v)<0&&e.v?[e.v]:[]).concat(it.vars||[]).map(v=>'<option'+(v===e.v?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>':'')
+    +((it.vars||[]).length||e.v?'<label class="field"><span>Разновидность</span><select id="e-var" class="inp"><option value="">Неважно</option>'+((vget(it,e.v)||!e.v)?[]:[e.v]).concat(vlist(it).map(v=>v.n)).map(v=>{const g=vprice(vget(it,v));return '<option value="'+esc(v)+'"'+(v===e.v?' selected':'')+'>'+esc(v)+(g?' — '+mrange(g.lo,g.hi):'')+'</option>'}).join('')+'</select></label>':'')
     +(funnyOn()?'<p class="s">Обычное название: '+esc(it.name)+'</p>':'')+'<div class="err" id="e-err"></div></div>',
     '<div class="actions"><button class="btn danger" type="button" data-act="entry-del">Убрать</button><button class="btn" type="button" data-act="item" data-id="'+esc(it.id)+'">Товар</button><span class="grow"></span><button class="btn primary" type="button" data-act="entry-save" data-primary="1">Готово</button></div>','e-qty');
 }
@@ -1511,10 +1544,13 @@ const act={
   'got-none'(){commit('Отметки сняты',()=>entries().forEach(e=>{if(e.got&&!e.done) Persist.put('list',Object.assign({},e,{got:false}))}),{quiet:true})},
   'got-first'(){ui.gotFirst=!ui.gotFirst;render(true)},
   'list-clear'(el){if(!entries().length) return;twoStep(el,'Точно очистить?',()=>{const all=entries();commit('Список очищен',()=>all.forEach(e=>Persist.del('list',e.id)),{quiet:true});ui.lsel.clear();render(true)})},
-  'var-rm'(el){fs.vars.splice(Number(el.dataset.i),1);renderVars()},
+  'vars-open'(){openVarEdit()},
+  'vars-ok'(){varsBack(true)},'vars-cancel'(){varsBack(false)},
+  'vrow-add'(){readVarRows();fs.rows.push({n:'',p:0,hi:0});renderVarEdit(true)},
+  'vrow-rm'(el){readVarRows();fs.rows.splice(Number(el.dataset.i),1);if(!fs.rows.length) fs.rows.push({n:'',p:0,hi:0});renderVarEdit()},
   'var-tgl'(el){const i=Number(el.dataset.v),k=fs.sel.indexOf(i);if(k>=0) fs.sel.splice(k,1);else fs.sel.push(i);renderVarPick()},
   'var-any'(){const id=fs.id;closeSheet();commit('Добавлено в список',()=>addToList(id,undefined,''));render(true)},
-  'var-ok'(){const id=fs.id,it=state.items.get(id),vs=fs.sel.slice().sort((p,q)=>p-q).map(i=>(it.vars||[])[i]).filter(Boolean);closeSheet();if(vs.length) commit('Добавлено в список',()=>vs.forEach(v=>addToList(id,undefined,v)));render(true)},
+  'var-ok'(){const id=fs.id,it=state.items.get(id),vs=fs.sel.slice().sort((p,q)=>p-q).map(i=>(vlist(it)[i]||{}).n).filter(Boolean);closeSheet();if(vs.length) commit('Добавлено в список',()=>vs.forEach(v=>addToList(id,undefined,v)));render(true)},
   'funny-rm'(el){fs.funny.splice(Number(el.dataset.i),1);renderFunny()},
   buy(el){const e=state.list.get(el.dataset.id);if(!e) return;
     if(e.done){toast('Покупка уже в истории. Откройте строку, чтобы убрать её из списка или отменить покупку.');return}
@@ -1748,7 +1784,7 @@ document.addEventListener('keydown',e=>{
   const c=comboFromEvent(e);
   if(modalOpen){
     if(e.key==='Enter'&&t&&t.id==='i-funny-in'){e.preventDefault();addFunny();return}
-    if(e.key==='Enter'&&t&&t.id==='i-vars-in'){e.preventDefault();addVar();return}
+    if(e.key==='Enter'&&t&&t.dataset&&t.dataset.vn!=null){e.preventDefault();document.querySelector('[data-act="vrow-add"]').click();return}
     if(e.key==='Escape'){closeSheet();return}
     const prim=$('#sheet [data-primary]');
     const saveKey=c&&ACTIONS.some(a=>a.ctx==='modal'&&keyOf(a)===c)&&!/^(BUTTON|TEXTAREA|A)$/.test(tag);
