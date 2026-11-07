@@ -9,6 +9,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
 <style>
+.grip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;flex:none;cursor:grab;touch-action:none;color:var(--muted);font-size:20px;line-height:1;user-select:none;-webkit-user-select:none;border-radius:8px}
+.grip:active{cursor:grabbing}.dragging{position:relative;z-index:50;opacity:.9;box-shadow:0 8px 24px rgba(0,0,0,.45)}.dropto{outline:2px dashed var(--accent);outline-offset:-2px}
+.catrows{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.catrow{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:2px 6px 2px 2px}
+.catrow .cn{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.catrow .mini{appearance:none;border:0;background:transparent;color:var(--muted);width:34px;height:34px;border-radius:8px;font-size:16px;cursor:pointer}
+
 /* Layout: one column (max 880px). Accent hero with the balance, month metrics, fixed bottom tab bar, forms in a bottom sheet with a pinned action bar. */
 :root{
   --bg:#F1F3F8; --surface:#FFFFFF; --surface-2:#F5F6FA; --ink:#101827; --muted:#596378; --line:#DCE0EA;
@@ -293,6 +300,7 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
     <button class="pbtn" id="pbtn" data-act="profiles" type="button" aria-label="Профили"><svg class="ic" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span id="pname">Профиль</span><svg class="ic" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
     <div class="r">
       <button class="icon-btn" id="b-undo" data-act="undo" type="button" aria-label="Отменить действие" title="Отменить действие" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg></button>
+      <button class="icon-btn" id="b-redo" data-act="redo" type="button" aria-label="Вернуть действие" title="Вернуть действие" disabled><svg class="ic" viewBox="0 0 24 24"><path d="M15 14l5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg></button>
       <button class="icon-btn" id="b-hide" data-act="hide" type="button" aria-label="Скрыть имена и реквизиты" title="Скрыть имена и реквизиты"><svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg></button>
     </div>
   </header>
@@ -725,7 +733,6 @@ function commit(label,fn,o){
   const t=tx;tx=null;
   if(!t.length) return;
   hist.undo.push({label,t});if(hist.undo.length>80) hist.undo.shift();hist.redo=[];
-  if(!(o&&o.quiet)) toast(label,{undo:true});
   renderHeader();
 }
 const Persist={
@@ -740,7 +747,7 @@ function restore(kind,id,val){
 function undo(){
   const e=hist.undo.pop();if(!e){toast('Нечего отменять');return}
   [...e.t].reverse().forEach(c=>restore(c.kind,c.id,c.prev));
-  hist.redo.push(e);toast('Отменено: '+e.label,{redo:true});renderHeader();render(true);
+  hist.redo.push(e);toast('Отменено: '+e.label);renderHeader();render(true);
 }
 function redo(){
   const e=hist.redo.pop();if(!e){toast('Нечего возвращать');return}
@@ -1361,7 +1368,7 @@ function comboLabel(c){
 /* ---------- settings / onboarding ---------- */
 function viewSettings(M){
   const s=state.settings,prof=state.profiles.get(state.active);
-  const chips=t=>'<div class="chips">'+s.cats[t].map(c=>'<span class="catchip">'+esc(c)+'<button type="button" data-act="cat-del" data-t="'+t+'" data-n="'+esc(c)+'" aria-label="Удалить категорию '+esc(c)+'">×</button></span>').join('')+'</div>'
+  const chips=t=>'<div class="catrows" data-drag="fcat" data-t="'+t+'">'+s.cats[t].map(c=>'<div class="catrow" data-dv="'+esc(c)+'"><span class="grip" title="Перетащить">⠿</span><span class="cn">'+esc(c)+'</span><button class="mini" type="button" data-act="cat-top" data-t="'+t+'" data-n="'+esc(c)+'" aria-label="В начало" title="В начало">⤒</button><button class="mini" type="button" data-act="cat-del" data-t="'+t+'" data-n="'+esc(c)+'" aria-label="Удалить категорию '+esc(c)+'">×</button></div>').join('')+'</div>'
     +'<div class="catadd"><input id="c-add-'+t+'" type="text" placeholder="Новая категория" autocomplete="off"><button class="btn" type="button" data-act="cat-add" data-t="'+t+'">Добавить</button></div>';
   const prow=s.people.map(p=>'<div class="pers"><button class="sw" type="button" data-act="p-color" data-id="'+esc(p.id)+'" style="--c:var(--p'+p.ci+')" aria-label="Сменить цвет"></button>'
     +'<label class="field"><span>Имя или ник</span><input type="text" data-p="'+esc(p.id)+'" data-f="name" value="'+esc(p.name)+'" autocomplete="off"></label>'
@@ -1409,7 +1416,7 @@ function schedule(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>rend
 function renderHeader(){
   const p=state.profiles.get(state.active);
   $('#pname').textContent=p?p.name:'Профиль';
-  $('#b-undo').disabled=!hist.undo.length;
+  $('#b-undo').disabled=!hist.undo.length;const rb=$('#b-redo');if(rb) rb.disabled=!hist.redo.length;
   const hb=$('#b-hide');hb.classList.toggle('on',prefs.hide);
   hb.setAttribute('aria-pressed',prefs.hide?'true':'false');
   $('#b-hide').innerHTML=prefs.hide?'<svg class="ic" viewBox="0 0 24 24"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.5 6.6A17 17 0 0 0 2 12s3.6 7 10 7a10.7 10.7 0 0 0 4.3-.9"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>':'<svg class="ic" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
@@ -1489,6 +1496,36 @@ function reconcileHist(){
   if(open&&histDepth===0){try{history.pushState({sheet:1},'');histDepth=1}catch(e){}}
   else if(!open&&histDepth===1){histBusy=true;clearTimeout(histT);histT=setTimeout(()=>{histBusy=false;histDepth=0},800);try{history.back()}catch(e){histBusy=false;histDepth=0}}
 }
+/* перетаскивание за ручку «⠿»: контейнер [data-drag], элементы [data-dv], обработчик DRAGH[имя](контейнер,откуда,куда) */
+const DRAGH={};let dragSuppress=0;
+DRAGH.fcat=(box,from,to)=>{const t=box.dataset.t;commit('Порядок категорий',()=>Persist.settings(s=>{const a=s.cats[t].slice(),i=a.indexOf(from),j=a.indexOf(to);if(i<0||j<0) return;a.splice(i,1);a.splice(j,0,from);s.cats[t]=a}),{quiet:true});render(true)};
+document.addEventListener('click',e=>{if(dragSuppress){e.stopPropagation();e.preventDefault()}},true);
+document.addEventListener('pointerdown',e=>{
+  const g=e.target.closest&&e.target.closest('.grip');if(!g) return;
+  const box=g.closest('[data-drag]'),el=g.closest('[data-dv]');if(!box||!el||!DRAGH[box.dataset.drag]) return;
+  e.preventDefault();
+  const r0=el.getBoundingClientRect(),x0=e.clientX,y0=e.clientY,items=[...box.querySelectorAll('[data-dv]')];
+  let target=null,moved=false,raf=0,py=y0;
+  try{g.setPointerCapture(e.pointerId)}catch(_){}
+  el.classList.add('dragging');
+  const hit=(x,y)=>{el.style.visibility='hidden';const t=document.elementFromPoint(x,y);el.style.visibility='';const c=t&&t.closest?t.closest('[data-dv]'):null;return c&&c!==el&&box.contains(c)?c:null};
+  const scroll=()=>{if(!el.classList.contains('dragging')) return;if(py<70) window.scrollBy(0,-14);else if(py>innerHeight-70) window.scrollBy(0,14);raf=requestAnimationFrame(scroll)};
+  raf=requestAnimationFrame(scroll);
+  const mv=ev=>{
+    const dx=ev.clientX-x0,dy=ev.clientY-y0;py=ev.clientY;
+    if(Math.abs(dx)+Math.abs(dy)>4) moved=true;
+    el.style.transform='translate('+dx+'px,'+dy+'px)';
+    const t=hit(ev.clientX,ev.clientY);
+    if(t!==target){if(target) target.classList.remove('dropto');target=t;if(target) target.classList.add('dropto')}
+  };
+  const up=()=>{
+    cancelAnimationFrame(raf);g.removeEventListener('pointermove',mv);g.removeEventListener('pointerup',up);g.removeEventListener('pointercancel',up);
+    el.classList.remove('dragging');el.style.transform='';items.forEach(i=>i.classList.remove('dropto'));
+    if(moved){dragSuppress=1;setTimeout(()=>{dragSuppress=0},350)}
+    if(moved&&target) DRAGH[box.dataset.drag](box,el.dataset.dv,target.dataset.dv);
+  };
+  g.addEventListener('pointermove',mv);g.addEventListener('pointerup',up);g.addEventListener('pointercancel',up);
+});
 window.addEventListener('popstate',()=>{
   if(histBusy){histBusy=false;histDepth=0;clearTimeout(histT);reconcileHist();return}
   if(histDepth===1){histDepth=0;if(!$('#modal').hidden) hideSheet()}
@@ -2082,6 +2119,7 @@ const act={
     if(state.settings.cats[t].indexOf(v)<0) commit('Категория добавлена',()=>Persist.settings(s=>{s.cats[t].push(v)}),{quiet:true});
     render(true);const nx=$('#c-add-'+t);if(nx) nx.focus();
   },
+  'cat-top'(el){const t=el.dataset.t,n=el.dataset.n;commit('Порядок категорий',()=>Persist.settings(s=>{s.cats[t]=[n].concat(s.cats[t].filter(c=>c!==n))}),{quiet:true});render(true)},
   'cat-del'(el){const t=el.dataset.t,n=el.dataset.n;commit('Категория удалена',()=>Persist.settings(s=>{s.cats[t]=s.cats[t].filter(c=>c!==n)}),{quiet:true});render(true)},
   'p-add'(){
     commit('Участник добавлен',()=>Persist.settings(s=>{const i=s.people.length;s.people.push({id:'p'+uid(),name:'Участник '+(i+1),ci:i%PCOL,start:0})}),{quiet:true});

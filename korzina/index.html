@@ -9,6 +9,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap">
 <style>
+.grip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;flex:none;cursor:grab;touch-action:none;color:var(--muted);font-size:20px;line-height:1;user-select:none;-webkit-user-select:none;border-radius:8px}
+.grip:active{cursor:grabbing}.dragging{position:relative;z-index:50;opacity:.9;box-shadow:0 8px 24px rgba(0,0,0,.45)}.dropto{outline:2px dashed var(--accent);outline-offset:-2px}
+.catrows{display:flex;flex-direction:column;gap:6px;margin-bottom:8px}
+.catrow{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:2px 6px 2px 2px}
+.catrow .cn{flex:1;min-width:0;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.catrow .mini{appearance:none;border:0;background:transparent;color:var(--muted);width:34px;height:34px;border-radius:8px;font-size:16px;cursor:pointer}
+
 /* Layout: one column (max 880px). Accent hero with the balance, month metrics, fixed bottom tab bar, forms in a bottom sheet with a pinned action bar. */
 :root{
   --bg:#F1F3F8; --surface:#FFFFFF; --surface-2:#F5F6FA; --ink:#101827; --muted:#596378; --line:#DCE0EA;
@@ -337,6 +344,15 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
 .altchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.altchips:empty{display:none}
 .altchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 4px 4px 12px;font-size:13px;font-weight:600}
 .altchip button{appearance:none;border:0;background:transparent;color:var(--muted);font-size:16px;line-height:1;width:24px;height:24px;border-radius:50%;cursor:pointer}
+
+.tile{min-height:112px}.tile .te{font-size:34px}
+@media(min-width:760px){.tile{min-height:160px}.tile .te{font-size:48px}.tile .tn{font-size:15px}.tiles{gap:14px}.tiles.c1 .tile{min-height:72px}}
+.tile .grip{position:absolute;top:2px;right:2px}.tile .tx2{top:auto;bottom:6px}.tiles.c1 .tile .grip{top:50%;margin-top:-17px}
+.grip{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;cursor:grab;touch-action:none;color:var(--muted);font-size:20px;user-select:none;-webkit-user-select:none}
+.dragging{position:relative;z-index:50;opacity:.9;box-shadow:0 8px 24px rgba(0,0,0,.45)}.dropto{outline:2px dashed var(--accent);outline-offset:-2px}
+.qsug{display:flex;flex-direction:column;gap:6px;margin-top:8px}.qsug:empty{display:none}
+.sug{appearance:none;display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px 12px;font:inherit;font-weight:600;cursor:pointer}
+.sug.new{border-style:dashed;color:var(--accent)}.sug .s{font-weight:400;color:var(--muted);font-size:12px}
 </style>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#4FD1A0">
@@ -461,6 +477,36 @@ function reconcileHist(){
   if(open&&histDepth===0){try{history.pushState({sheet:1},'');histDepth=1}catch(e){}}
   else if(!open&&histDepth===1){histBusy=true;clearTimeout(histT);histT=setTimeout(()=>{histBusy=false;histDepth=0},800);try{history.back()}catch(e){histBusy=false;histDepth=0}}
 }
+/* перетаскивание за ручку «⠿»: контейнер [data-drag], элементы [data-dv], обработчик DRAGH[имя](контейнер,откуда,куда) */
+const DRAGH={};let dragSuppress=0;
+DRAGH.fcat=(box,from,to)=>{const t=box.dataset.t;commit('Порядок категорий',()=>Persist.settings(s=>{const a=s.cats[t].slice(),i=a.indexOf(from),j=a.indexOf(to);if(i<0||j<0) return;a.splice(i,1);a.splice(j,0,from);s.cats[t]=a}),{quiet:true});render(true)};
+document.addEventListener('click',e=>{if(dragSuppress){e.stopPropagation();e.preventDefault()}},true);
+document.addEventListener('pointerdown',e=>{
+  const g=e.target.closest&&e.target.closest('.grip');if(!g) return;
+  const box=g.closest('[data-drag]'),el=g.closest('[data-dv]');if(!box||!el||!DRAGH[box.dataset.drag]) return;
+  e.preventDefault();
+  const r0=el.getBoundingClientRect(),x0=e.clientX,y0=e.clientY,items=[...box.querySelectorAll('[data-dv]')];
+  let target=null,moved=false,raf=0,py=y0;
+  try{g.setPointerCapture(e.pointerId)}catch(_){}
+  el.classList.add('dragging');
+  const hit=(x,y)=>{el.style.visibility='hidden';const t=document.elementFromPoint(x,y);el.style.visibility='';const c=t&&t.closest?t.closest('[data-dv]'):null;return c&&c!==el&&box.contains(c)?c:null};
+  const scroll=()=>{if(!el.classList.contains('dragging')) return;if(py<70) window.scrollBy(0,-14);else if(py>innerHeight-70) window.scrollBy(0,14);raf=requestAnimationFrame(scroll)};
+  raf=requestAnimationFrame(scroll);
+  const mv=ev=>{
+    const dx=ev.clientX-x0,dy=ev.clientY-y0;py=ev.clientY;
+    if(Math.abs(dx)+Math.abs(dy)>4) moved=true;
+    el.style.transform='translate('+dx+'px,'+dy+'px)';
+    const t=hit(ev.clientX,ev.clientY);
+    if(t!==target){if(target) target.classList.remove('dropto');target=t;if(target) target.classList.add('dropto')}
+  };
+  const up=()=>{
+    cancelAnimationFrame(raf);g.removeEventListener('pointermove',mv);g.removeEventListener('pointerup',up);g.removeEventListener('pointercancel',up);
+    el.classList.remove('dragging');el.style.transform='';items.forEach(i=>i.classList.remove('dropto'));
+    if(moved){dragSuppress=1;setTimeout(()=>{dragSuppress=0},350)}
+    if(moved&&target) DRAGH[box.dataset.drag](box,el.dataset.dv,target.dataset.dv);
+  };
+  g.addEventListener('pointermove',mv);g.addEventListener('pointerup',up);g.addEventListener('pointercancel',up);
+});
 window.addEventListener('popstate',()=>{
   if(histBusy){histBusy=false;histDepth=0;clearTimeout(histT);reconcileHist();return}
   if(histDepth===1){histDepth=0;if(!$('#modal').hidden) hideSheet()}
@@ -508,10 +554,10 @@ Object.assign(ICONS,{
 });
 /* ---------- state ---------- */
 const DEF_TAGS=[{id:'daily',name:'Ежедневная',c:2,grp:'ess'},{id:'planned',name:'Запланированная',c:0,grp:'ess'},{id:'must',name:'Обязательная',c:1,grp:'ess'},{id:'unplanned',name:'Внеплановая',c:4,grp:'wish'},{id:'wish',name:'Хотелка',c:3,grp:'wish'}];
-function defSettings(){return {manualEss:0,manualWish:0,manualFirst:false,budgetManual:false,currency:'₽',nameMode:'normal',cats:['Продукты','Бытовая химия','Одежда','Сигареты','Другое'],catIcons:{},cv:0,profiles:[],tags:clone(DEF_TAGS),budget:0,useFin:true,toFin:true}}
+function defSettings(){return {manualEss:0,manualWish:0,manualFirst:false,budgetManual:false,currency:'₽',nameMode:'normal',cats:['Продукты','Бытовая химия','Одежда','Сигареты','Другое'],catIcons:{},myEmoji:[],cv:0,profiles:[],tags:clone(DEF_TAGS),budget:0,useFin:true,toFin:true}}
 const DEF_CATS=[['Продукты','🛒'],['Мясные','🥩'],['Колбасы и деликатесы','🌭'],['Рыба и морепродукты','🐟'],['Молочные','🥛'],['Яйца','🥚'],['Хлеб и выпечка','🍞'],['Крупы и макароны','🍚'],['Соусы и специи','🧂'],['Консервы','🥫'],['Масла','🫒'],['Фрукты','🍎'],['Овощи','🥦'],['Зелень и грибы','🍄'],['Орехи и сухофрукты','🥜'],['Сладости','🍫'],['Чай и кофе','☕'],['Напитки','🥤'],['Алкоголь','🍷'],['Заморозка','🧊'],['Готовая еда','🍱'],['Детское','🧸'],['Для животных','🐾'],['Лекарства','💊'],['Гигиена и уход','🧼'],['Бытовая химия','🧴'],['Хозтовары','🗑️'],['Посуда и кухня','🍽️'],['Одежда','👕'],['Обувь','👟'],['Канцелярия','✏️'],['Электроника','🔌'],['Инструменты','🔧'],['Для дома','🏠'],['Авто','🚗'],['Книги','📚'],['Спорт','⚽'],['Подарки','🎁'],['Цветы и сад','🌷'],['Сигареты','🚬'],['Другое','📦']];
 function normSettings(d){const b=defSettings(),s=Object.assign(b,d||{});if(!Array.isArray(s.cats)) s.cats=b.cats;if(!Array.isArray(s.tags)||!s.tags.length) s.tags=b.tags;
-  if(!s.catIcons||typeof s.catIcons!=='object') s.catIcons={};if(!Array.isArray(s.profiles)) s.profiles=[];
+  if(!s.catIcons||typeof s.catIcons!=='object') s.catIcons={};if(!Array.isArray(s.profiles)) s.profiles=[];if(!Array.isArray(s.myEmoji)) s.myEmoji=[];
   if(s.cv!==2){s.cats=s.cats.slice();s.catIcons=Object.assign({},s.catIcons);DEF_CATS.forEach(p=>{if(s.cats.indexOf(p[0])<0) s.cats.push(p[0]);if(!s.catIcons[p[0]]) s.catIcons[p[0]]=p[1]});s.cv=2}
   return s}
 const catIcon=c=>(state.settings.catIcons&&state.settings.catIcons[c])||(DEF_CATS.find(p=>p[0]===c)||[0,'🏷️'])[1];
@@ -580,7 +626,7 @@ const basePrice=it=>priceAt(it,mainStore(it));
 const entryStore=(e,it)=>(e.store&&state.stores.has(e.store))?e.store:mainStore(it);
 const entryUnit=(e,it)=>priceAt(it,entryStore(e,it));
 const parsePriceRange=v=>{const m=String(v||'').replace(/\u00a0/g,' ').match(/^\s*([\d\s.,]+?)\s*[-–—]\s*([\d\s.,]+?)\s*$/);if(!m) return null;const a=parseAmount(m[1]),b=parseAmount(m[2]);return isFinite(a)&&isFinite(b)&&a>0&&b>0?{lo:Math.min(a,b),hi:Math.max(a,b)}:null};
-function priceHiAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0) return p;const lo=Number(it.price)||0,hi=Number(it.pmax)||0;return lo>0?(hi>lo?hi:lo):0}
+function priceHiAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0){const h=it.pricesHi?Number(it.pricesHi[sid]):0;return h>p?h:p}const lo=Number(it.price)||0,hi=Number(it.pmax)||0;return lo>0?(hi>lo?hi:lo):0}
 const baseHi=it=>priceHiAt(it,mainStore(it));
 const entryHi=(e,it)=>priceHiAt(it,entryStore(e,it));
 const mrange=(lo,hi)=>hi>lo+0.5?nfm(r2(lo))+'–'+money(hi):money(lo);
@@ -663,17 +709,17 @@ function shopSummary(){
   return {include:true,cur:s.currency,count:n,total:r2(total),byTag:by,items:rows,est:{ok:E.ok,src:E.src,ess:r2(E.ess),wish:r2(E.wish),rare:r2(E.rare),rareM:E.rareM,essM:E.essM,wishM:E.wishM,days:E.days,n:E.n,top:E.top}};
 }
 /* ---------- list ops ---------- */
-function addToList(itemId,qty){
-  const it=state.items.get(itemId);if(!it) return;
-  const ex=inList(itemId);
+function addToList(itemId,qty,v){
+  const it=state.items.get(itemId);if(!it) return;v=v||'';
+  const ex=entries().find(e=>e.itemId===itemId&&!e.done&&(e.v||'')===v);
   if(ex) Persist.put('list',Object.assign({},ex,{qty:r2((Number(ex.qty)||1)+(qty||1))}));
-  else Persist.put('list',{id:uid(),itemId,qty:qty||(!curPf()&&need(it)>0?r2(need(it)):1),store:'',done:false,pf:curPf()});
+  else Persist.put('list',{id:uid(),itemId,qty:qty||(!curPf()&&need(it)>0?r2(need(it)):1),store:'',done:false,pf:curPf(),v});
 }
 function buyEntry(e){
   const it=state.items.get(e.itemId);if(!it) return;
   const q=Number(e.qty)||1,pr=r2((entryUnit(e,it)+entryHi(e,it))/2),sid=entryStore(e,it);
   Persist.put('list',Object.assign({},e,{done:true,doneAt:todayISO()}));
-  Persist.put('buys',{id:uid(),entry:e.id,itemId:it.id,name:it.name,cat:it.cat||'',tag:it.tag||'',date:todayISO(),ts:Date.now(),qty:q,price:pr,sum:r2(q*pr),store:sid,pf:e.pf||''});
+  Persist.put('buys',{id:uid(),entry:e.id,itemId:it.id,name:it.name,cat:it.cat||'',tag:it.tag||'',date:todayISO(),ts:Date.now(),qty:q,price:pr,sum:r2(q*pr),store:sid,pf:e.pf||'',v:e.v||''});
   if(!e.pf) Persist.put('items',Object.assign({},it,{have:r2((Number(it.have)||0)+q)}));
 }
 function unbuyEntry(e){
@@ -707,8 +753,8 @@ function viewList(){
   const all=entries(),open=all.filter(e=>!e.done),done=all.filter(e=>e.done),P=prefs.prices;
   const gotN=open.filter(e=>e.got).length,total=listTotal(),shortN=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id)).length;
   let h='<div class="stack">'+profileBar();
-  h+='<section class="card"><div class="qadd"><input id="q-add" class="inp" list="dl-items" placeholder="Что купить? Название и Enter" autocomplete="off"><button class="btn primary" type="button" data-act="q-add">Добавить</button></div>'
-    +'<datalist id="dl-items">'+[...state.items.values()].map(it=>'<option value="'+esc(dn(it))+'"></option>').join('')+'</datalist>'
+  h+='<section class="card"><div class="qadd"><input id="q-add" class="inp" placeholder="Что купить? Название и Enter" autocomplete="off" enterkeyhint="done"><button class="btn primary" type="button" data-act="q-add">Добавить</button></div>'
+    +'<div id="q-sug" class="qsug"></div>'
     +'<div class="chipbar" style="margin-top:10px">'
     +'<button class="fchip act" type="button" data-act="short-add">Недостающее'+(shortN?' ('+shortN+')':'')+'</button>'
     +'<button class="fchip act" type="button" data-act="pick-pack">Из пака</button>'
@@ -769,7 +815,7 @@ function todaySpent(){const t=todayISO();let s=0;mainBuys().forEach(b=>{if(b.dat
 function entryRow(e){
   const it=state.items.get(e.itemId),q=Number(e.qty)||1,P=prefs.prices,u=entryUnit(e,it);
   return '<div class="row'+(e.done?' done':e.got?' got':'')+'">'+(ui.lMode?chk(ui.lsel.has(e.id),'lsel',e.id,'sel','Выбрать'):(e.done?'<span class="chk ok on" aria-hidden="true" style="pointer-events:none;opacity:.7">'+ic('check')+'</span>':chk(e.got,'buy',e.id,'ok','Отметить купленным')))
-    +'<button class="rowmain" type="button" data-act="'+(ui.lMode?'lsel':'entry')+'" data-id="'+esc(e.id)+'"><span class="tx"><span class="t">'+esc(dn(it))+'</span>'+tagChip(it)+'<br><span class="s">'+nfm(q)+' '+esc(it.unit||'шт')+(it.cat?' · '+esc(it.cat):'')+sub2(it)+'</span></span>'
+    +'<button class="rowmain" type="button" data-act="'+(ui.lMode?'lsel':'entry')+'" data-id="'+esc(e.id)+'"><span class="tx"><span class="t">'+esc(dn(it))+(e.v?' · '+esc(e.v):'')+'</span>'+tagChip(it)+'<br><span class="s">'+nfm(q)+' '+esc(it.unit||'шт')+(it.cat?' · '+esc(it.cat):'')+sub2(it)+'</span></span>'
     +(P&&u?'<span class="amt-c"><span class="a">'+mrange(q*u,q*entryHi(e,it))+'</span>'+(q!==1?'<span class="sub">'+mrange(u,entryHi(e,it))+' за '+esc(it.unit||'шт')+'</span>':'')+'</span>':'')+'</button></div>';
 }
 function filtered(){
@@ -798,6 +844,7 @@ function itemRow(it){
 function catalogHTML(){
   const arr=filtered(),shown=arr.slice(0,ui.limit);
   let h=shown.map(itemRow).join('')||'<div class="empty">'+(state.items.size?'Ничего не найдено.':'Пока пусто. Нажмите «+», чтобы добавить товар.')+'</div>';
+  const qn=cap(ui.q||'');if(qn&&!findItemByName(qn)) h+='<div style="padding-top:10px"><button class="btn primary" type="button" data-act="cat-new-q">＋ Добавить «'+esc(qn)+'» как новый товар</button></div>';
   if(arr.length>shown.length) h+='<div style="padding-top:8px"><button class="btn" type="button" data-act="more">Показать ещё ('+(arr.length-shown.length)+')</button></div>';
   return h;
 }
@@ -811,6 +858,8 @@ function catOrder(){
   else if(m==='filled') l.sort((a,b)=>((cnt[b]||0)>0)-((cnt[a]||0)>0));
   return l;
 }
+DRAGH.blocks=(box,from,to)=>{const arr=catOrder(),i=arr.indexOf(from),j=arr.indexOf(to);if(i<0||j<0) return;arr.splice(i,1);arr.splice(j,0,from);
+  commit('Порядок категорий',()=>Persist.settings(s=>{s.cats=arr}),{quiet:true});prefs.bsort='custom';savePrefs();render(true)};
 function catChips(){
   const {cnt}=catCounts();
   return catOrder().filter(c=>cnt[c]||ui.cats.has(c)).map(c=>fchip(ui.cats.has(c),'f-cat',c,catIcon(c)+' '+c)).join('')+'<button class="fchip act" type="button" data-act="iview" data-v="blocks">▦ Все категории</button>';
@@ -818,7 +867,7 @@ function catChips(){
 const BSORTS=[['custom','Мой порядок (по номерам)'],['az','По алфавиту А–Я'],['za','По алфавиту Я–А'],['many','Сначала где больше товаров'],['few','Сначала где меньше товаров'],['filled','Сначала непустые']];
 function blocksHTML(){
   const s=state.settings,{cnt,none}=catCounts(),cols=prefs.bcols||'auto',num=cols!=='auto'?Number(cols):0;
-  const tile=(act,v,ic_,name,n,idx)=>'<button class="tile" type="button" data-act="'+act+'" data-v="'+esc(v)+'">'+(ui.blkEdit&&prefs.bsort==='custom'&&idx?'<span class="tno">'+idx+'</span>':'')+'<span class="te">'+esc(ic_)+'</span><span class="tn">'+esc(name)+'</span><span class="tc">'+(n==null?'':n+' шт.')+'</span>'+(ui.blkEdit&&act==='blk-edit-one'?'<span class="tx2">✎</span>':'')+'</button>';
+  const tile=(act,v,ic_,name,n,idx)=>'<button class="tile" type="button" data-act="'+act+'" data-v="'+esc(v)+'"'+(ui.blkEdit&&act==='blk-edit-one'?' data-dv="'+esc(v)+'"':'')+'>'+(ui.blkEdit&&act==='blk-edit-one'?'<span class="grip" title="Перетащить">⠿</span>':'')+(ui.blkEdit&&prefs.bsort==='custom'&&idx?'<span class="tno">'+idx+'</span>':'')+'<span class="te">'+esc(ic_)+'</span><span class="tn">'+esc(name)+'</span><span class="tc">'+(n==null?'':n+' шт.')+'</span>'+(ui.blkEdit&&act==='blk-edit-one'?'<span class="tx2">✎</span>':'')+'</button>';
   let list=catOrder();if(prefs.bhide&&!ui.blkEdit) list=list.filter(c=>cnt[c]);
   const sel=(id,opts,cur)=>'<select id="'+id+'" class="inp">'+opts.map(o=>'<option value="'+o[0]+'"'+(String(o[0])===String(cur)?' selected':'')+'>'+o[1]+'</option>').join('')+'</select>';
   let h=fold('bset','Вид блоков','<div class="row2"><label class="field"><span>В ширину</span>'+sel('b-cols',[['auto','Авто'],[1,'1 (списком)'],[2,'2'],[3,'3'],[4,'4'],[5,'5']],cols)+'</label>'
@@ -826,8 +875,8 @@ function blocksHTML(){
     +'<label class="check"><input id="b-hide" type="checkbox"'+(prefs.bhide?' checked':'')+'><span>Скрывать пустые категории</span></label>'
     +(prefs.bsort==='custom'?'<p class="s">Свой порядок: нажмите «Править», откройте блок и впишите его номер.</p>':''),'');
   h+='<section class="card"><div class="sec-h"><b>Категории</b><button class="link" type="button" data-act="blk-edit">'+(ui.blkEdit?'Готово':'Править')+'</button></div>';
-  if(ui.blkEdit) h+='<p class="s">Нажмите на блок, чтобы изменить название, значок, номер или удалить.</p>';
-  h+='<div class="tiles'+(num===1?' c1':num>=4?' dense':'')+'"'+(num?' style="grid-template-columns:repeat('+num+',minmax(0,1fr))"':'')+'>'
+  if(ui.blkEdit) h+='<p class="s">Перетащите блок за ⠿, чтобы поменять порядок. Нажмите на блок, чтобы изменить название, значок, номер или удалить.</p>';
+  h+='<div class="tiles'+(num===1?' c1':num>=4?' dense':'')+'"'+(ui.blkEdit?' data-drag="blocks"':'')+(num?' style="grid-template-columns:repeat('+num+',minmax(0,1fr))"':'')+'>'
     +list.map(c=>tile(ui.blkEdit?'blk-edit-one':'blk-open',c,catIcon(c),c,cnt[c]||0,s.cats.indexOf(c)+1)).join('')
     +(none&&!(prefs.bhide&&!ui.blkEdit&&false)?tile('blk-open','','🏷️','Без категории',none):'')+'<button class="tile add" type="button" data-act="blk-new"><span class="te">＋</span><span class="tn">Своя категория</span></button></div></section>';
   return h;
@@ -887,7 +936,7 @@ function weeklyChart(metric){
   buys.forEach(b=>{if(b.date<from) return;const i=idx.get(wkStart(b.date));if(i==null) return;const it=state.items.get(b.itemId),g=it?grpOf(it):'ess';bk[i][g]=(bk[i][g]||0)+(metric==='sum'?(Number(b.sum)||0):1)});
   const tot=bk.map(b=>b.ess+b.wish+b.rare+b.off),max=Math.max.apply(null,tot.concat([1]));
   const n=bk.length,W=340,H=150,pb=22,pt=16,gap=n>13?4:6,bw=Math.max(5,Math.floor((W-gap*(n+1))/n)),fmt=v=>metric==='sum'?(v>=10000?Math.round(v/1000)+'к':v>=1000?(Math.round(v/100)/10).toString().replace('.',',')+'к':String(Math.round(v))):String(v);
-  const col={ess:'var(--p2)',wish:'var(--p4)',rare:'var(--p3)',off:'var(--muted)'};
+  const col={ess:'var(--accent)',wish:'#8D96AD',rare:'#5E687F',off:'var(--muted)'};
   let svg='<svg viewBox="0 0 '+W+' '+H+'" class="chart" role="img" aria-label="Покупки по неделям">';
   bk.forEach((b,i)=>{
     const x=gap+i*(bw+gap);let y=H-pb;
@@ -1068,10 +1117,11 @@ const optList=(arr,sel,first)=>(first==null?'':'<option value="">'+first+'</opti
 const sortedStores=()=>[...state.stores.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
 function openItemForm(id,pre){
   const it=id?state.items.get(id):null,s=state.settings,x=it||Object.assign({name:'',funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}},pre||{});
-  fs={kind:'item',id:id||null,funny:((it?it.funny:(pre&&pre.funny))||[]).slice()};
-  const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'" placeholder="нет в этом магазине" value="'+esc(x.prices&&x.prices[st.id]>0?x.prices[st.id]:'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
+  fs={kind:'item',id:id||null,funny:((it?it.funny:(pre&&pre.funny))||[]).slice(),vars:((it?it.vars:(pre&&pre.vars))||[]).slice()};
+  const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'" placeholder="нет / 100 / 100–150" value="'+esc(x.prices&&x.prices[st.id]>0?(x.pricesHi&&x.pricesHi[st.id]>x.prices[st.id]?x.prices[st.id]+'–'+x.pricesHi[st.id]:x.prices[st.id]):'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
   const body='<div class="form"><label class="field"><span>Название (нормальное)</span><input id="i-name" class="inp" type="text" value="'+esc(x.name)+'" autocomplete="off" placeholder="Хлеб"></label>'
     +'<div class="field"><span>Альт. названия (впишите вариант и нажмите Enter)</span><div id="i-funny-chips" class="altchips"></div><input id="i-funny-in" class="inp" type="text" autocomplete="off"></div>'
+    +'<div class="field"><span>Разновидности (необязательно): впишите и нажмите Enter</span><div id="i-vars-chips" class="altchips"></div><input id="i-vars-in" class="inp" type="text" autocomplete="off"><span class="s">Например, у хлеба: ржаной, сырный. При добавлении в список я спрошу, какой нужен, а в каталоге останется один «Хлеб».</span></div>'
     +'<div class="row2"><label class="field"><span>Категория</span><select id="i-cat" class="inp">'+optList(s.cats.concat(x.cat&&s.cats.indexOf(x.cat)<0?[x.cat]:[]),x.cat,'Без категории')+'</select></label>'
     +'<label class="field"><span>Метка</span><select id="i-tag" class="inp">'+optList(s.tags,x.tag,'Без метки')+'</select></label></div>'
     +'<div class="row2"><label class="field"><span>Есть сейчас</span><input id="i-have" class="inp" type="text" inputmode="decimal" value="'+esc(x.have||'')+'" placeholder="0"></label>'
@@ -1080,10 +1130,19 @@ function openItemForm(id,pre){
     +'<label class="field"><span>Обычная цена ('+esc(s.currency)+'), можно диапазоном</span><input id="i-price" class="inp" type="text" inputmode="decimal" value="'+esc(x.pmax>x.price&&x.price>0?x.price+'–'+x.pmax:(x.price||''))+'" placeholder="100 или диапазон 100–150"></label></div>'
     +'<label class="field"><span>Основной магазин</span><select id="i-store" class="inp">'+optList(sortedStores(),x.store,'Выбрать автоматически (самый дешёвый)')+'</select></label>'
     +'<div><div class="lbl" style="margin-bottom:6px">Цены по магазинам (где можем купить)</div>'+sp+'</div>'+(it?'<div class="actions"><button class="btn" type="button" data-act="item-hist" data-id="'+esc(it.id)+'">История покупок и частота</button></div>':'')+'<div class="err" id="i-err" role="alert"></div></div>';
-  openSheet(it?'Товар':'Новый товар',body,'<div class="actions">'+(it?'<button class="btn danger" type="button" data-act="item-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="item-save" data-primary="1">Сохранить</button></div>','i-name');renderFunny();
+  openSheet(it?'Товар':'Новый товар',body,'<div class="actions">'+(it?'<button class="btn danger" type="button" data-act="item-del">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="item-save" data-primary="1">Сохранить</button></div>','i-name');renderFunny();renderVars();
 }
 const cap=v=>{v=String(v||'').trim();return v?v.charAt(0).toUpperCase()+v.slice(1):v};
 function renderFunny(){const el=$('#i-funny-chips');if(!el||!fs||!fs.funny) return;el.innerHTML=fs.funny.map((f,i)=>'<span class="altchip">'+esc(f)+'<button type="button" data-act="funny-rm" data-i="'+i+'" aria-label="Убрать">×</button></span>').join('')}
+function renderVars(){const el=$('#i-vars-chips');if(!el||!fs||!fs.vars) return;el.innerHTML=fs.vars.map((f,i)=>'<span class="altchip">'+esc(f)+'<button type="button" data-act="var-rm" data-i="'+i+'" aria-label="Убрать">×</button></span>').join('')}
+function addVar(){const el=$('#i-vars-in');if(!el||!fs||!fs.vars) return;const v=cap(el.value);el.value='';if(!v) return;if(!fs.vars.some(f=>f.toLowerCase()===v.toLowerCase())) fs.vars.push(v);renderVars()}
+function askVariant(id){const it=state.items.get(id);if(!it) return;fs={kind:'varpick',id,sel:[]};renderVarPick()}
+function renderVarPick(){
+  const it=state.items.get(fs.id);if(!it) return closeSheet();
+  const inL=new Set(entries().filter(e=>e.itemId===it.id&&!e.done).map(e=>e.v||''));
+  openSheet(esc(dn(it)),'<div class="form"><p class="s">Какой нужен? Можно выбрать несколько.</p><div class="chipbar" style="flex-wrap:wrap">'+(it.vars||[]).map((v,i)=>fchip(fs.sel.indexOf(i)>=0,'var-tgl',String(i),v+(inL.has(v)?' ✓':''))).join('')+'</div></div>',
+    '<div class="actions"><button class="btn" type="button" data-act="var-any">Неважно</button><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="var-ok" data-primary="1"'+(fs.sel.length?'':' disabled')+'>Добавить</button></div>');
+}
 function addFunny(){
   const el=$('#i-funny-in');if(!el||!fs||!fs.funny) return;const v=cap(el.value);el.value='';if(!v) return;
   const low=v.toLowerCase(),nm=($('#i-name')?$('#i-name').value:'').trim().toLowerCase();
@@ -1091,14 +1150,14 @@ function addFunny(){
   renderFunny();
 }
 function saveItem(){
-  const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();const name=cap($('#i-name').value);if(!name) return ($('#i-err').textContent='Введите название.');
+  const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();const pv=$('#i-vars-in');if(pv&&pv.value.trim()) addVar();const name=cap($('#i-name').value);if(!name) return ($('#i-err').textContent='Введите название.');
   const old=fs.id?state.items.get(fs.id):null,dup=findItemByName(name);
   if(dup&&(!old||dup.id!==old.id)) return ($('#i-err').textContent='Такой товар уже есть: '+dup.name+'.');
   const num=v=>{v=String(v).trim();if(!v) return 0;const n=parseAmount(v);return isFinite(n)&&n>=0?n:0};
   const rg=parsePriceRange($('#i-price').value);
-  const prices={};document.querySelectorAll('[data-sp]').forEach(i=>{const p=num(i.value);if(p>0) prices[i.dataset.sp]=p});
-  if(old&&old.prices) for(const k in old.prices) if(!state.stores.has(k)) prices[k]=old.prices[k];
-  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices});
+  const prices={},pricesHi={};document.querySelectorAll('[data-sp]').forEach(i=>{const g=parsePriceRange(i.value),p=g?g.lo:num(i.value);if(p>0){prices[i.dataset.sp]=p;if(g) pricesHi[i.dataset.sp]=g.hi}});
+  if(old&&old.prices) for(const k in old.prices) if(!state.stores.has(k)){prices[k]=old.prices[k];if(old.pricesHi&&old.pricesHi[k]) pricesHi[k]=old.pricesHi[k]}
+  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi,vars:fs.vars.slice()});
   closeSheet();commit(old?'Товар изменён':'Товар добавлен',()=>Persist.put('items',o));
 }
 function kassaBox(tot){
@@ -1179,9 +1238,10 @@ function openEntry(eid){
   fs={kind:'entry',id:eid};
   if(e.done){openSheet(esc(dn(it)),'<div class="form"><p class="s">Куплено'+(e.doneAt?' '+esc(e.doneAt):'')+', записано в историю и в статистику.</p><p class="s">«Убрать из списка» только прячет строку, история остаётся. «Отменить покупку» ещё и стирает её из истории.</p></div>','<div class="actions"><button class="btn" type="button" data-act="entry-del">Убрать из списка</button><span class="grow"></span><button class="btn danger" type="button" data-act="unbuy">Отменить покупку</button></div>');return}
   const P=prefs.prices,cur=entryStore(e,it),ch=cheapest(it);
-  const opts=sortedStores().map(st=>{const p=priceAt(it,st.id),has=it.prices&&st.id in it.prices;return '<option value="'+esc(st.id)+'"'+(st.id===cur?' selected':'')+'>'+esc(st.name)+(P&&has?' — '+money(p)+(ch&&ch.sid===st.id?' (дешевле всего)':''):'')+'</option>'}).join('');
+  const opts=sortedStores().map(st=>{const p=priceAt(it,st.id),has=it.prices&&st.id in it.prices;return '<option value="'+esc(st.id)+'"'+(st.id===cur?' selected':'')+'>'+esc(st.name)+(P&&has?' — '+mrange(p,priceHiAt(it,st.id))+(ch&&ch.sid===st.id?' (дешевле всего)':''):'')+'</option>'}).join('');
   openSheet(esc(dn(it)),'<div class="form"><div class="field"><span>Количество ('+esc(it.unit||'шт')+')</span><div class="stp"><button class="btn" type="button" data-act="qty-d" data-d="-1">−</button><input id="e-qty" class="inp" type="text" inputmode="decimal" value="'+esc(e.qty||1)+'"><button class="btn" type="button" data-act="qty-d" data-d="1">+</button></div></div>'
     +'<label class="field"><span>Где покупаем</span><select id="e-store" class="inp"><option value="">Выбрать автоматически</option>'+opts+'</select></label>'
+    +((it.vars||[]).length||e.v?'<label class="field"><span>Разновидность</span><select id="e-var" class="inp"><option value="">Неважно</option>'+((it.vars||[]).indexOf(e.v)<0&&e.v?[e.v]:[]).concat(it.vars||[]).map(v=>'<option'+(v===e.v?' selected':'')+'>'+esc(v)+'</option>').join('')+'</select></label>':'')
     +(funnyOn()?'<p class="s">Обычное название: '+esc(it.name)+'</p>':'')+'<div class="err" id="e-err"></div></div>',
     '<div class="actions"><button class="btn danger" type="button" data-act="entry-del">Убрать</button><button class="btn" type="button" data-act="item" data-id="'+esc(it.id)+'">Товар</button><span class="grow"></span><button class="btn primary" type="button" data-act="entry-save" data-primary="1">Готово</button></div>','e-qty');
 }
@@ -1206,6 +1266,7 @@ function openPackChooser(){
     +'<button class="btn primary" type="button" data-act="bulk-pack-to" data-id="">＋ Новый пак</button></div></div>','<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button></div>');
 }
 const EMOJI_PICK=['🥩','🍗','🐟','🥛','🧀','🥚','🍞','🍚','🍝','🥫','🧂','🍎','🍌','🥦','🥕','🍅','🍄','🥜','🍫','🍪','☕','🥤','🍷','🍺','🧊','🍱','🧸','🐾','💊','🧼','🧴','🧹','🗑️','🍽️','👕','👟','✏️','🔌','🔧','🏠','🚗','📚','⚽','🎁','🌷','🚬','📦','🛒'];
+const mineHTML=()=>((state.settings.myEmoji||[]).map(e=>'<button class="fchip" type="button" data-act="emo-pick" data-v="'+esc(e)+'">'+esc(e)+'</button>').join(''))+'<button class="fchip act" type="button" data-act="emo-add">＋ Сохранить значок выше</button>'+((state.settings.myEmoji||[]).length?'<button class="fchip act" type="button" data-act="emo-clear">Очистить мои</button>':'');
 function openCatSheet(name){
   const s=state.settings,old=name||null;
   fs={kind:'cat',old,icon:old?catIcon(old):'🏷️'};
@@ -1213,6 +1274,7 @@ function openCatSheet(name){
     +'<div class="row2"><label class="field"><span>Значок (эмодзи)</span><input id="c-icon" class="inp" type="text" value="'+esc(fs.icon)+'" maxlength="8" autocomplete="off"></label>'
     +'<label class="field"><span>Номер в порядке (1–'+(s.cats.length+(old?0:1))+')</span><input id="c-pos" class="inp" type="text" inputmode="numeric" value="'+(old?s.cats.indexOf(old)+1:s.cats.length+1)+'" autocomplete="off"></label></div>'
     +'<div class="chipbar" style="flex-wrap:wrap">'+EMOJI_PICK.map(e=>'<button class="fchip" type="button" data-act="emo-pick" data-v="'+e+'">'+e+'</button>').join('')+'</div>'
+    +'<div class="lbl">Мои смайлики</div><div id="c-mine" class="chipbar" style="flex-wrap:wrap">'+mineHTML()+'</div>'
     +(old?'<p class="s">Товаров в категории: '+[...state.items.values()].filter(it=>it.cat===old).length+'. При переименовании они переедут вместе с ней; при удалении останутся без категории.</p>':'')
     +'<div class="err" id="c-err"></div></div>',
     '<div class="actions">'+(old?'<button class="btn danger" type="button" data-act="cat-del2">Удалить</button>':'')+'<span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="cat-save" data-primary="1">Сохранить</button></div>','c-name');
@@ -1381,14 +1443,33 @@ function syncCard(){
 }
 /* ---------- actions ---------- */
 const refreshCatalog=()=>{const c=$('#catlist');if(!c) return;c.innerHTML=catalogHTML();const n=$('#catcount');if(n) n.textContent='Найдено '+filtered().length+' из '+state.items.size};
+function qsMatches(v){
+  const k=nameKey(v);if(!k) return [];const out=[];
+  state.items.forEach(it=>{let sc=0;[it.name].concat(it.funny||[]).forEach(n=>{const nk=nameKey(n);if(!nk) return;
+    if(nk===k) sc=Math.max(sc,100);else if(nk.startsWith(k)) sc=Math.max(sc,60);else if(nk.includes(k)) sc=Math.max(sc,40);else if(k.split(' ').filter(Boolean).every(w=>nk.includes(w))) sc=Math.max(sc,30)});
+    if(sc) out.push([sc,it])});
+  return out.sort((p,q)=>q[0]-p[0]||dn(p[1]).localeCompare(dn(q[1]),'ru')).slice(0,6).map(p=>p[1]);
+}
+function qsRender(){
+  const box=$('#q-sug'),inp=$('#q-add');if(!box||!inp) return;
+  const v=cap(inp.value);if(!v){box.innerHTML='';return}
+  const exact=findItemByName(v);
+  box.innerHTML=qsMatches(v).map(it=>'<button class="sug" type="button" data-act="qs-add" data-id="'+esc(it.id)+'"><span>'+esc(dn(it))+((it.vars||[]).length?' ▾':'')+'</span><span class="s">'+(inList(it.id)?'уже в списке':esc(it.cat||''))+'</span></button>').join('')
+    +(exact?'':'<button class="sug new" type="button" data-act="qs-new">＋ Новый товар «'+esc(v)+'»</button>');
+}
+function addByUser(it){
+  if((it.vars||[]).length&&!entries().some(e=>e.itemId===it.id&&!e.done)){askVariant(it.id);return}
+  commit('Добавлено в список',()=>addToList(it.id));
+}
 function quickAdd(){
   const inp=$('#q-add');if(!inp) return;const v=cap(inp.value);if(!v) return;
-  let it=findItemByName(v);
-  commit(it?'Добавлено в список':'Новый товар и добавлено в список',()=>{
-    if(!it){it={id:uid(),name:v,funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}};Persist.put('items',it)}
-    addToList(it.id);
-  });
-  render(true);const n=$('#q-add');if(n) n.focus();
+  const it=findItemByName(v);
+  if(it){addByUser(it);render(true);const n=$('#q-add');if(n) n.focus();return}
+  qsRender();toast(qsMatches(v).length?'Такого точного названия нет. Выберите из подсказок или «Новый товар».':'Такого товара нет. Нажмите «Новый товар», чтобы добавить.');
+}
+function createItem(name){
+  const it={id:uid(),name,funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}};
+  commit('Новый товар',()=>Persist.put('items',it),{quiet:true});return it;
 }
 const tgl=(set,v)=>{if(v==='') set.clear();else if(set.has(v)) set.delete(v);else set.add(v)};
 const act={
@@ -1398,6 +1479,9 @@ const act={
   fold(el){const id=el.dataset.id;prefs.open[id]=!prefs.open[id];savePrefs();render(true)},
   add(){openItemForm(null)},
   'q-add'(){quickAdd()},
+  'qs-add'(el){const it=state.items.get(el.dataset.id);if(!it) return;addByUser(it);render(true);const n=$('#q-add');if(n) n.focus()},
+  'qs-new'(){const inp=$('#q-add');const v=inp?cap(inp.value):'';if(!v) return;let it=findItemByName(v);commit('Новый товар и добавлено в список',()=>{if(!it){it={id:uid(),name:v,funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}};Persist.put('items',it)}addToList(it.id)});render(true);const n=$('#q-add');if(n) n.focus()},
+  'cat-new-q'(){const v=cap(ui.q);if(!v||findItemByName(v)) return;createItem(v);toast('Добавлен товар «'+v+'» без категории и цены. Откройте его, чтобы дополнить.');render(true)},
   'sug-add'(el){const it=state.items.get(el.dataset.id);if(!it) return;commit('Добавлено в список',()=>addToList(it.id,Math.max(1,Math.ceil(need(it)))),{quiet:true})},
   'sug-all'(){const arr=[...state.items.values()].filter(it=>need(it)>0&&!inList(it.id)&&grpOf(it)==='ess');if(!arr.length) return;commit('Нужное добавлено ('+arr.length+')',()=>arr.forEach(it=>addToList(it.id,Math.max(1,Math.ceil(need(it))))))},
   'short-add'(){
@@ -1427,6 +1511,10 @@ const act={
   'got-none'(){commit('Отметки сняты',()=>entries().forEach(e=>{if(e.got&&!e.done) Persist.put('list',Object.assign({},e,{got:false}))}),{quiet:true})},
   'got-first'(){ui.gotFirst=!ui.gotFirst;render(true)},
   'list-clear'(el){if(!entries().length) return;twoStep(el,'Точно очистить?',()=>{const all=entries();commit('Список очищен',()=>all.forEach(e=>Persist.del('list',e.id)),{quiet:true});ui.lsel.clear();render(true)})},
+  'var-rm'(el){fs.vars.splice(Number(el.dataset.i),1);renderVars()},
+  'var-tgl'(el){const i=Number(el.dataset.v),k=fs.sel.indexOf(i);if(k>=0) fs.sel.splice(k,1);else fs.sel.push(i);renderVarPick()},
+  'var-any'(){const id=fs.id;closeSheet();commit('Добавлено в список',()=>addToList(id,undefined,''));render(true)},
+  'var-ok'(){const id=fs.id,it=state.items.get(id),vs=fs.sel.slice().sort((p,q)=>p-q).map(i=>(it.vars||[])[i]).filter(Boolean);closeSheet();if(vs.length) commit('Добавлено в список',()=>vs.forEach(v=>addToList(id,undefined,v)));render(true)},
   'funny-rm'(el){fs.funny.splice(Number(el.dataset.i),1);renderFunny()},
   buy(el){const e=state.list.get(el.dataset.id);if(!e) return;
     if(e.done){toast('Покупка уже в истории. Откройте строку, чтобы убрать её из списка или отменить покупку.');return}
@@ -1475,7 +1563,7 @@ const act={
   'entry-save'(){
     const e=state.list.get(fs.id);if(!e) return closeSheet();
     const q=parseAmount($('#e-qty').value);if(!isFinite(q)||q<=0) return ($('#e-err').textContent='Введите количество больше нуля.');
-    const sid=$('#e-store').value;closeSheet();commit('Запись изменена',()=>Persist.put('list',Object.assign({},e,{qty:q,store:sid})),{quiet:true});
+    const sid=$('#e-store').value,vv=$('#e-var')?$('#e-var').value:(e.v||'');closeSheet();commit('Запись изменена',()=>Persist.put('list',Object.assign({},e,{qty:q,store:sid,v:vv})),{quiet:true});
   },
   unbuy(el){twoStep(el,'Точно отменить покупку?',()=>{const id=fs.id,e=state.list.get(id);closeSheet();if(e) commit('Покупка отменена',()=>unbuyEntry(e),{quiet:true})})},
   'fin-clear-done'(){closeSheet();const d=entries().filter(e=>e.done);commit('Купленное убрано из списка',()=>d.forEach(e=>Persist.del('list',e.id)),{quiet:true});render(true)},
@@ -1484,7 +1572,10 @@ const act={
   item(el){closeSheet();openItemForm(el.dataset.id)},
   'item-save'(){saveItem()},
   'item-del'(){const id=fs.id,it=state.items.get(id);if(!it) return;closeSheet();commit('Товар удалён',()=>{[...state.list.values()].forEach(e=>{if(e.itemId===id) Persist.del('list',e.id)});[...state.packs.values()].forEach(p=>{if((p.items||[]).some(x=>x.id===id)) Persist.put('packs',Object.assign({},p,{items:p.items.filter(x=>x.id!==id)}))});Persist.del('items',id)})},
-  'to-list'(el){const id=el.dataset.id,e=inList(id);commit(e?'Убрано из списка':'Добавлено в список',()=>e?Persist.del('list',e.id):addToList(id))},
+  'to-list'(el){const id=el.dataset.id,it=state.items.get(id),es=entries().filter(e=>e.itemId===id&&!e.done);
+    if(es.length) commit('Убрано из списка',()=>es.forEach(e=>Persist.del('list',e.id)));
+    else if(it&&(it.vars||[]).length) askVariant(id);
+    else commit('Добавлено в список',()=>addToList(id))},
   sel(el){const id=el.dataset.id;if(ui.sel.has(id)) ui.sel.delete(id);else ui.sel.add(id);render(true)},
   'sel-mode'(){ui.selMode=!ui.selMode;ui.sel.clear();render(true)},
   'sel-all'(){filtered().forEach(it=>ui.sel.add(it.id));render(true)},
@@ -1517,6 +1608,8 @@ const act={
   'blk-edit'(){ui.blkEdit=!ui.blkEdit;render(true)},
   'blk-edit-one'(el){openCatSheet(el.dataset.v)},
   'blk-new'(){openCatSheet(null)},
+  'emo-add'(){const v=($('#c-icon').value||'').trim();if(!v) return;commit('Смайлик сохранён',()=>Persist.settings(s=>{if(!(s.myEmoji||[]).includes(v)) s.myEmoji=(s.myEmoji||[]).concat([v]).slice(-40)}),{quiet:true});const m=$('#c-mine');if(m) m.innerHTML=mineHTML()},
+  'emo-clear'(){commit('Мои смайлики очищены',()=>Persist.settings(s=>{s.myEmoji=[]}),{quiet:true});const m=$('#c-mine');if(m) m.innerHTML=mineHTML()},
   'emo-pick'(el){const i=$('#c-icon');if(i) i.value=el.dataset.v},
   'cat-save'(){
     const pos0=$('#c-pos')?$('#c-pos').value:'',nm=$('#c-name').value.trim(),ic0=($('#c-icon').value||'').trim()||'🏷️',old=fs.old;
@@ -1527,7 +1620,7 @@ const act={
       Persist.settings(s=>{s.catIcons=Object.assign({},s.catIcons);
         let arr=old?s.cats.map(c=>c===old?nm:c):s.cats.concat([nm]);if(old&&old!==nm) delete s.catIcons[old];
         const pos=parseInt(pos0,10);if(pos>=1&&pos<=arr.length){arr=arr.filter(c=>c!==nm);arr.splice(pos-1,0,nm)}
-        s.cats=arr;s.catIcons[nm]=ic0});
+        s.cats=arr;s.catIcons[nm]=ic0;if(ic0!=='🏷️'&&EMOJI_PICK.indexOf(ic0)<0&&!(s.myEmoji||[]).includes(ic0)) s.myEmoji=(s.myEmoji||[]).concat([ic0]).slice(-40)});
       if(old&&old!==nm) state.items.forEach(it=>{if(it.cat===old) Persist.put('items',Object.assign({},it,{cat:nm}))});
     },{quiet:true});
     if(old&&old!==nm&&ui.cats.has(old)){ui.cats.delete(old);ui.cats.add(nm)}
@@ -1617,6 +1710,7 @@ const act={
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled) return;const f=act[el.dataset.act];if(f) f(el,e)});
 document.addEventListener('input',e=>{
   const t=e.target;
+  if(t.id==='q-add'){qsRender();return}
   if(t.id==='q'){const was=!!ui.q;ui.q=t.value;ui.limit=100;if(prefs.iview==='blocks'&&(was!==!!ui.q)){render(true);const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}else refreshCatalog()}
 });
 document.addEventListener('change',e=>{
@@ -1654,6 +1748,7 @@ document.addEventListener('keydown',e=>{
   const c=comboFromEvent(e);
   if(modalOpen){
     if(e.key==='Enter'&&t&&t.id==='i-funny-in'){e.preventDefault();addFunny();return}
+    if(e.key==='Enter'&&t&&t.id==='i-vars-in'){e.preventDefault();addVar();return}
     if(e.key==='Escape'){closeSheet();return}
     const prim=$('#sheet [data-primary]');
     const saveKey=c&&ACTIONS.some(a=>a.ctx==='modal'&&keyOf(a)===c)&&!/^(BUTTON|TEXTAREA|A)$/.test(tag);
