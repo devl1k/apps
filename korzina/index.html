@@ -342,6 +342,9 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
 .tiles.c1 .tile{flex-direction:row;justify-content:flex-start;gap:12px;min-height:56px;padding:8px 14px;text-align:left}.tiles.c1 .tile .tn{flex:1}.tiles.dense .tile{min-height:76px;padding:8px 4px}.tiles.dense .te{font-size:24px}.tiles.dense .tn{font-size:11px}
 .tile .tn{overflow-wrap:anywhere}.tile .tno{position:absolute;top:5px;left:8px;font-size:11px;font-weight:700;color:var(--accent)}
 .varbtn{width:100%;text-align:left;justify-content:flex-start;white-space:normal;height:auto;min-height:44px;padding:10px 12px;font-weight:600}
+.vtiles{display:flex;flex-wrap:wrap;gap:8px}.vtile{appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer;max-width:100%}.vtile b{font-size:14px}.vadd{justify-content:center;color:var(--muted);border-style:dashed}
+.vsrow{display:grid;grid-template-columns:minmax(0,1fr) 110px 40px;gap:8px;align-items:center;margin-bottom:6px;font-size:14px}.vsrow>span:first-child{overflow:hidden;text-overflow:ellipsis}.vadds{margin-top:2px}
+.vcard{border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;background:var(--surface)}.vtop{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;margin-bottom:8px}.vprices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.vp{display:flex;flex-direction:column;gap:2px}
 .vrow{display:grid;grid-template-columns:minmax(0,1fr) 120px 44px;gap:8px;align-items:center;margin-bottom:8px}.vhead{margin-bottom:4px}
 .altchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.altchips:empty{display:none}
 .altchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 4px 4px 12px;font-size:13px;font-weight:600}
@@ -625,15 +628,17 @@ function priceAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0)
 function cheapest(it){let b=null;for(const sid in (it.prices||{})){if(!state.stores.has(sid)) continue;const p=Number(it.prices[sid]);if(p>0&&(!b||p<b.p)) b={sid,p}}return b}
 const mainStore=it=>(it.store&&state.stores.has(it.store))?it.store:((cheapest(it)||{}).sid||'');
 const basePrice=it=>priceAt(it,mainStore(it));
-const entryStore=(e,it)=>(e.store&&state.stores.has(e.store))?e.store:mainStore(it);
 const vlist=it=>(it&&it.vars||[]).map(v=>typeof v==='string'?{n:v,p:0,hi:0}:v);
 const vget=(it,n)=>n?vlist(it).find(v=>v.n===n):null;
-const vprice=v=>v&&Number(v.p)>0?{lo:Number(v.p),hi:Number(v.hi)>Number(v.p)?Number(v.hi):Number(v.p)}:null;
-const entryUnit=(e,it)=>{const g=vprice(vget(it,e.v));return g?g.lo:priceAt(it,entryStore(e,it))};
+const vpr=(v,sid)=>{const p=sid&&v.prices?Number(v.prices[sid]):0;if(p>0){const h=v.pricesHi?Number(v.pricesHi[sid]):0;return {lo:p,hi:h>p?h:p}}const q=Number(v.p)||0;if(q>0){const h=Number(v.hi)||0;return {lo:q,hi:h>q?h:q}}return null};
+const vcheap=v=>{let b=null;for(const sid in (v&&v.prices||{})){if(!state.stores.has(sid)) continue;const p=Number(v.prices[sid]);if(p>0&&(!b||p<b.p)) b={sid,p}}return b};
+const vspan=v=>{const a=[];if(Number(v.p)>0) a.push([Number(v.p),Math.max(Number(v.hi)||0,Number(v.p))]);for(const k in (v.prices||{})){const p=Number(v.prices[k]);if(p>0) a.push([p,Math.max(Number(v.pricesHi&&v.pricesHi[k])||0,p)])}return a.length?{lo:Math.min(...a.map(x=>x[0])),hi:Math.max(...a.map(x=>x[1]))}:null};
+const entryStore=(e,it)=>{if(e.store&&state.stores.has(e.store)) return e.store;if(!(it.store&&state.stores.has(it.store))){const c=vcheap(vget(it,e.v));if(c) return c.sid}return mainStore(it)};
+const entryUnit=(e,it)=>{const sid=entryStore(e,it),g=vpr(vget(it,e.v)||{},sid);return g?g.lo:priceAt(it,sid)};
 const parsePriceRange=v=>{const m=String(v||'').replace(/\u00a0/g,' ').match(/^\s*([\d\s.,]+?)\s*[-–—]\s*([\d\s.,]+?)\s*$/);if(!m) return null;const a=parseAmount(m[1]),b=parseAmount(m[2]);return isFinite(a)&&isFinite(b)&&a>0&&b>0?{lo:Math.min(a,b),hi:Math.max(a,b)}:null};
 function priceHiAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0){const h=it.pricesHi?Number(it.pricesHi[sid]):0;return h>p?h:p}const lo=Number(it.price)||0,hi=Number(it.pmax)||0;return lo>0?(hi>lo?hi:lo):0}
 const baseHi=it=>priceHiAt(it,mainStore(it));
-const entryHi=(e,it)=>{const g=vprice(vget(it,e.v));return g?g.hi:priceHiAt(it,entryStore(e,it))};
+const entryHi=(e,it)=>{const sid=entryStore(e,it),g=vpr(vget(it,e.v)||{},sid);return g?g.hi:priceHiAt(it,sid)};
 const mrange=(lo,hi)=>hi>lo+0.5?nfm(r2(lo))+'–'+money(hi):money(lo);
 const curPf=()=>prefs.pf&&(state.settings.profiles||[]).some(p=>p.id===prefs.pf)?prefs.pf:'';
 const mainBuys=()=>[...state.buys.values()].filter(b=>!b.pf);
@@ -835,7 +840,11 @@ function filtered(){
     return !q||hay(it).includes(q);
   });
   const cmp={name:(a,b)=>dn(a).localeCompare(dn(b),'ru'),cat:(a,b)=>(a.cat||'я').localeCompare(b.cat||'я','ru')||dn(a).localeCompare(dn(b),'ru'),price:(a,b)=>(basePrice(a)||1e12)-(basePrice(b)||1e12),noprice:(a,b)=>((basePrice(a)>0?1:0)-(basePrice(b)>0?1:0))||dn(a).localeCompare(dn(b),'ru'),sel:(a,b)=>{const k=it=>(ui.selMode&&ui.sel.size)?ui.sel.has(it.id):!!inList(it.id);return (k(b)-k(a))||dn(a).localeCompare(dn(b),'ru')}};
-  return out.sort(cmp[ui.sort]||cmp.name);
+  const base=cmp[ui.sort]||cmp.name;
+  if(!q) return out.sort(base);
+  const rk=it=>{const ns=[it.name].concat(it.funny||[]).map(norm);if(ns.some(n=>n.startsWith(q))) return 0;if(ns.some(n=>n.split(/[\s\-]+/).some(w=>w.startsWith(q)))) return 1;if(ns.some(n=>n.includes(q))) return 2;return 3};
+  const r=new Map(out.map(it=>[it.id,rk(it)]));
+  return out.sort((a,b)=>r.get(a.id)-r.get(b.id)||base(a,b));
 }
 function itemRow(it){
   const sel=ui.sel.has(it.id),P=prefs.prices,ms=mainStore(it),bp=basePrice(it),c=cheapest(it),inl=!!inList(it.id);
@@ -1126,7 +1135,7 @@ function openItemForm(id,pre){
   const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'"  value="'+esc(x.prices&&x.prices[st.id]>0?(x.pricesHi&&x.pricesHi[st.id]>x.prices[st.id]?x.prices[st.id]+'–'+x.pricesHi[st.id]:x.prices[st.id]):'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
   const body='<div class="form"><label class="field"><span>Название (нормальное)</span><input id="i-name" class="inp" type="text" value="'+esc(x.name)+'" autocomplete="off" placeholder="Хлеб"></label>'
     +'<div class="field"><span>Альт. названия (впишите вариант и нажмите Enter)</span><div id="i-funny-chips" class="altchips"></div><input id="i-funny-in" class="inp" type="text" autocomplete="off"></div>'
-    +'<div class="field"><span>Разновидности</span><button class="btn varbtn" type="button" data-act="vars-open">'+(fs.vars.length?esc(fs.vars.map(v=>v.n+(v.p>0?' · '+(v.hi>v.p?v.p+'–'+v.hi:v.p):'')).join(', ')):'Добавить разновидности')+'</button></div>'
+    +'<div class="field"><span>Разновидности</span><div class="vtiles">'+fs.vars.map(v=>{const g=vspan(v),k=Object.keys(v.prices||{}).length;return '<button class="vtile" type="button" data-act="vars-open"><b>'+esc(v.n)+'</b><span class="s">'+(g?mrange(g.lo,g.hi):'без цены')+(k?' · '+k+' '+(k===1?'магазин':'магазина'):'')+'</span></button>'}).join('')+'<button class="vtile vadd" type="button" data-act="vars-open">'+(fs.vars.length?'Изменить':'＋ Добавить')+'</button></div></div>'
     +'<div class="row2"><label class="field"><span>Категория</span><select id="i-cat" class="inp">'+optList(s.cats.concat(x.cat&&s.cats.indexOf(x.cat)<0?[x.cat]:[]),x.cat,'Без категории')+'</select></label>'
     +'<label class="field"><span>Метка</span><select id="i-tag" class="inp">'+optList(s.tags,x.tag,'Без метки')+'</select></label></div>'
     +'<div class="row2"><label class="field"><span>Есть сейчас</span><input id="i-have" class="inp" type="text" inputmode="decimal" value="'+esc(x.have||'')+'" placeholder="0"></label>'
@@ -1151,29 +1160,37 @@ function openVarEdit(){
   fs={kind:'varedit',id:fs.id,pre,rows:fs.vars.map(v=>Object.assign({},v))};if(!fs.rows.length) fs.rows.push({n:'',p:0,hi:0});
   renderVarEdit();
 }
-function varRow(v,i){const t=v.p>0?(v.hi>v.p?v.p+'–'+v.hi:String(v.p)):'';
-  return '<div class="vrow"><input class="inp" type="text" data-vn="'+i+'" value="'+esc(v.n)+'" autocomplete="off"><input class="inp" type="text" inputmode="decimal" data-vp="'+i+'" value="'+esc(t)+'" autocomplete="off"><button class="btn" type="button" data-act="vrow-rm" data-i="'+i+'" aria-label="Убрать">×</button></div>'}
+const ptxt=(p,h)=>p>0?(h>p?p+'–'+h:String(p)):'';
+const vshown=v=>Object.keys(v.prices||{}).concat(v.show||[]).filter((x,k,a)=>a.indexOf(x)===k&&state.stores.has(x));
+function varRow(v,i){
+  const sh=vshown(v),free=sortedStores().filter(s=>sh.indexOf(s.id)<0);
+  const st=sh.map(sid=>'<div class="vsrow"><span>'+esc(storeName(sid))+'</span><input class="inp" type="text" inputmode="decimal" data-vs="'+i+'" data-sid="'+esc(sid)+'" value="'+esc(ptxt(Number(v.prices&&v.prices[sid]),Number(v.pricesHi&&v.pricesHi[sid])))+'" autocomplete="off"><button class="btn" type="button" data-act="vs-rm" data-i="'+i+'" data-sid="'+esc(sid)+'" aria-label="Убрать">×</button></div>').join('');
+  return '<div class="vcard"><div class="vtop"><input class="inp" type="text" data-vn="'+i+'" value="'+esc(v.n)+'" autocomplete="off"><button class="btn" type="button" data-act="vrow-rm" data-i="'+i+'" aria-label="Убрать разновидность">×</button></div>'
+    +'<div class="vsrow"><span>Обычная цена</span><input class="inp" type="text" inputmode="decimal" data-vp="'+i+'" value="'+esc(ptxt(Number(v.p),Number(v.hi)))+'" autocomplete="off"><span></span></div>'+st
+    +(free.length?'<select class="inp vadds" data-vsadd="'+i+'"><option value="">＋ Цена в магазине…</option>'+free.map(s=>'<option value="'+esc(s.id)+'">'+esc(s.name)+'</option>').join('')+'</select>':'')+'</div>'}
 function readVarRows(){
   if(!document.querySelector('[data-vn]')) return;
-  fs.rows=[...document.querySelectorAll('[data-vn]')].map((el,i)=>{const t=document.querySelector('[data-vp="'+i+'"]').value.trim(),g=parsePriceRange(t),n=g?g.lo:parseAmount(t);
-    return {n:cap(el.value),p:g?g.lo:(isFinite(n)&&n>0?n:0),hi:g?g.hi:0}});
+  const pr=t=>{t=String(t).trim();if(!t) return null;const g=parsePriceRange(t);if(g) return g;const n=parseAmount(t);return isFinite(n)&&n>0?{lo:n,hi:0}:null};
+  fs.rows=[...document.querySelectorAll('[data-vn]')].map((el,i)=>{const g=pr(document.querySelector('[data-vp="'+i+'"]').value),prices={},pricesHi={};
+    document.querySelectorAll('[data-vs="'+i+'"]').forEach(x=>{const h=pr(x.value);if(h){prices[x.dataset.sid]=h.lo;if(h.hi>h.lo) pricesHi[x.dataset.sid]=h.hi}});
+    return {n:cap(el.value),p:g?g.lo:0,hi:g&&g.hi>g.lo?g.hi:0,prices,pricesHi,show:[...document.querySelectorAll('[data-vs="'+i+'"]')].map(x=>x.dataset.sid)}});
 }
 function renderVarEdit(focusLast){
-  const it=fs.id?state.items.get(fs.id):null,nm=cap(fs.pre.name)||'Товар';
-  openSheet('Разновидности: '+esc(nm),'<div class="form"><div class="vrow vhead"><span class="s">Название</span><span class="s">Цена, можно диапазоном</span><span></span></div><div id="v-rows">'+fs.rows.map(varRow).join('')+'</div>'
-    +'<div class="actions"><button class="btn" type="button" data-act="vrow-add">＋ Ещё</button></div><p class="s">Если цена не указана, берётся цена товара. В каталоге всё это остаётся одним товаром.</p></div>',
+  const nm=cap(fs.pre.name)||'Товар';
+  openSheet('Разновидности: '+esc(nm),'<div class="form"><div id="v-rows">'+fs.rows.map(varRow).join('')+'</div>'
+    +'<div class="actions"><button class="btn" type="button" data-act="vrow-add">＋ Ещё разновидность</button></div><p class="s">Цены можно диапазоном. Не указана цена в магазине — берётся обычная, нет и её — цена товара.</p></div>',
     '<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="vars-cancel">Назад</button><button class="btn primary" type="button" data-act="vars-ok" data-primary="1">Готово</button></div>');
   if(focusLast) setTimeout(()=>{const a=document.querySelectorAll('[data-vn]');if(a.length) a[a.length-1].focus()},170);
 }
 function varsBack(keep){
-  readVarRows();const seen=new Set(),vars=keep?fs.rows.filter(v=>v.n&&!seen.has(v.n.toLowerCase())&&seen.add(v.n.toLowerCase())):fs.pre.vars;
+  readVarRows();const seen=new Set(),vars=keep?fs.rows.map(v=>{const o=Object.assign({},v);delete o.show;return o}).filter(v=>v.n&&!seen.has(v.n.toLowerCase())&&seen.add(v.n.toLowerCase())):fs.pre.vars;
   const id=fs.id,pre=Object.assign({},fs.pre,{vars});openItemForm(id,pre);
 }
 function askVariant(id){const it=state.items.get(id);if(!it) return;fs={kind:'varpick',id,sel:[]};renderVarPick()}
 function renderVarPick(){
   const it=state.items.get(fs.id);if(!it) return closeSheet();
   const inL=new Set(entries().filter(e=>e.itemId===it.id&&!e.done).map(e=>e.v||''));
-  openSheet(esc(dn(it)),'<div class="form"><p class="s">Какой нужен? Можно выбрать несколько.</p><div class="chipbar" style="flex-wrap:wrap">'+vlist(it).map((v,i)=>fchip(fs.sel.indexOf(i)>=0,'var-tgl',String(i),v.n+(v.p>0?' · '+(v.hi>v.p?v.p+'–'+v.hi:v.p):'')+(inL.has(v.n)?' ✓':''))).join('')+'</div></div>',
+  openSheet(esc(dn(it)),'<div class="form"><p class="s">Какой нужен? Можно выбрать несколько.</p><div class="chipbar" style="flex-wrap:wrap">'+vlist(it).map((v,i)=>fchip(fs.sel.indexOf(i)>=0,'var-tgl',String(i),v.n+(vspan(v)?' · '+mrange(vspan(v).lo,vspan(v).hi):'')+(inL.has(v.n)?' ✓':''))).join('')+'</div></div>',
     '<div class="actions"><button class="btn" type="button" data-act="var-any">Неважно</button><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="var-ok" data-primary="1"'+(fs.sel.length?'':' disabled')+'>Добавить</button></div>');
 }
 function addFunny(){
@@ -1271,10 +1288,10 @@ function openEntry(eid){
   fs={kind:'entry',id:eid};
   if(e.done){openSheet(esc(dn(it)),'<div class="form"><p class="s">Куплено'+(e.doneAt?' '+esc(e.doneAt):'')+', записано в историю и в статистику.</p><p class="s">«Убрать из списка» только прячет строку, история остаётся. «Отменить покупку» ещё и стирает её из истории.</p></div>','<div class="actions"><button class="btn" type="button" data-act="entry-del">Убрать из списка</button><span class="grow"></span><button class="btn danger" type="button" data-act="unbuy">Отменить покупку</button></div>');return}
   const P=prefs.prices,cur=entryStore(e,it),ch=cheapest(it);
-  const opts=sortedStores().map(st=>{const p=priceAt(it,st.id),has=it.prices&&st.id in it.prices;return '<option value="'+esc(st.id)+'"'+(st.id===cur?' selected':'')+'>'+esc(st.name)+(P&&has?' — '+mrange(p,priceHiAt(it,st.id))+(ch&&ch.sid===st.id?' (дешевле всего)':''):'')+'</option>'}).join('');
+  const ev=vget(it,e.v),opts=sortedStores().map(st=>{const vg=ev?vpr(ev,st.id):null,vs=ev&&ev.prices&&Number(ev.prices[st.id])>0,p=vg?vg.lo:priceAt(it,st.id),hi=vg?vg.hi:priceHiAt(it,st.id),has=vs||(it.prices&&st.id in it.prices);return '<option value="'+esc(st.id)+'"'+(st.id===cur?' selected':'')+'>'+esc(st.name)+(P&&has?' — '+mrange(p,hi):'')+'</option>'}).join('');
   openSheet(esc(dn(it)),'<div class="form"><div class="field"><span>Количество ('+esc(it.unit||'шт')+')</span><div class="stp"><button class="btn" type="button" data-act="qty-d" data-d="-1">−</button><input id="e-qty" class="inp" type="text" inputmode="decimal" value="'+esc(e.qty||1)+'"><button class="btn" type="button" data-act="qty-d" data-d="1">+</button></div></div>'
     +'<label class="field"><span>Где покупаем</span><select id="e-store" class="inp"><option value="">Выбрать автоматически</option>'+opts+'</select></label>'
-    +((it.vars||[]).length||e.v?'<label class="field"><span>Разновидность</span><select id="e-var" class="inp"><option value="">Неважно</option>'+((vget(it,e.v)||!e.v)?[]:[e.v]).concat(vlist(it).map(v=>v.n)).map(v=>{const g=vprice(vget(it,v));return '<option value="'+esc(v)+'"'+(v===e.v?' selected':'')+'>'+esc(v)+(g?' — '+mrange(g.lo,g.hi):'')+'</option>'}).join('')+'</select></label>':'')
+    +((it.vars||[]).length||e.v?'<label class="field"><span>Разновидность</span><select id="e-var" class="inp"><option value="">Неважно</option>'+((vget(it,e.v)||!e.v)?[]:[e.v]).concat(vlist(it).map(v=>v.n)).map(v=>{const g=vspan(vget(it,v)||{});return '<option value="'+esc(v)+'"'+(v===e.v?' selected':'')+'>'+esc(v)+(g?' — '+mrange(g.lo,g.hi):'')+'</option>'}).join('')+'</select></label>':'')
     +(funnyOn()?'<p class="s">Обычное название: '+esc(it.name)+'</p>':'')+'<div class="err" id="e-err"></div></div>',
     '<div class="actions"><button class="btn danger" type="button" data-act="entry-del">Убрать</button><button class="btn" type="button" data-act="item" data-id="'+esc(it.id)+'">Товар</button><span class="grow"></span><button class="btn primary" type="button" data-act="entry-save" data-primary="1">Готово</button></div>','e-qty');
 }
@@ -1545,6 +1562,7 @@ const act={
   'got-first'(){ui.gotFirst=!ui.gotFirst;render(true)},
   'list-clear'(el){if(!entries().length) return;twoStep(el,'Точно очистить?',()=>{const all=entries();commit('Список очищен',()=>all.forEach(e=>Persist.del('list',e.id)),{quiet:true});ui.lsel.clear();render(true)})},
   'vars-open'(){openVarEdit()},
+  'vs-rm'(el){readVarRows();const r=fs.rows[Number(el.dataset.i)],s=el.dataset.sid;if(r){delete r.prices[s];delete r.pricesHi[s];r.show=(r.show||[]).filter(x=>x!==s)}renderVarEdit()},
   'vars-ok'(){varsBack(true)},'vars-cancel'(){varsBack(false)},
   'vrow-add'(){readVarRows();fs.rows.push({n:'',p:0,hi:0});renderVarEdit(true)},
   'vrow-rm'(el){readVarRows();fs.rows.splice(Number(el.dataset.i),1);if(!fs.rows.length) fs.rows.push({n:'',p:0,hi:0});renderVarEdit()},
@@ -1751,6 +1769,7 @@ document.addEventListener('input',e=>{
 });
 document.addEventListener('change',e=>{
   const el=e.target;
+  if(el.dataset&&el.dataset.vsadd!=null){if(el.value){readVarRows();const r=fs.rows[Number(el.dataset.vsadd)];if(r) r.show=(r.show||[]).concat(el.value);renderVarEdit()}return}
   if(el.id==='b-cols'){prefs.bcols=el.value;savePrefs();render(true);return}
   if(el.id==='b-sort'){prefs.bsort=el.value;savePrefs();render(true);return}
   if(el.id==='b-hide'){prefs.bhide=el.checked;savePrefs();render(true);return}
