@@ -344,6 +344,9 @@ kbd{font:600 12px ui-monospace,Menlo,Consolas,monospace;background:var(--surface
 .varbtn{width:100%;text-align:left;justify-content:flex-start;white-space:normal;height:auto;min-height:44px;padding:10px 12px;font-weight:600}
 .vtiles{display:flex;flex-wrap:wrap;gap:8px}.vtile{appearance:none;display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:8px 12px;font:inherit;cursor:pointer;max-width:100%}.vtile b{font-size:14px}.vadd{justify-content:center;color:var(--muted);border-style:dashed}
 .vsrow{display:grid;grid-template-columns:minmax(0,1fr) 110px 40px;gap:8px;align-items:center;margin-bottom:6px;font-size:14px}.vsrow>span:first-child{overflow:hidden;text-overflow:ellipsis}.vadds{margin-top:2px}
+.vtools{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px;margin-bottom:10px}.vcard[hidden],.fchip[hidden]{display:none}
+.vstore{appearance:none;border:0;background:none;color:inherit;font:inherit;text-align:left;display:flex;flex-direction:column;padding:0;cursor:pointer;min-width:0}.vstore b{font-size:14px}
+.vlist{display:flex;flex-direction:column;gap:8px}.vopt{appearance:none;display:flex;justify-content:space-between;gap:12px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--text);border-radius:12px;padding:12px;font:inherit;cursor:pointer}.vopt.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}.vopt b{font-weight:600}
 .vcard{border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;background:var(--surface)}.vtop{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:8px;margin-bottom:8px}.vprices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.vp{display:flex;flex-direction:column;gap:2px}
 .vrow{display:grid;grid-template-columns:minmax(0,1fr) 120px 44px;gap:8px;align-items:center;margin-bottom:8px}.vhead{margin-bottom:4px}
 .altchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}.altchips:empty{display:none}
@@ -624,8 +627,22 @@ const storeName=id=>{const s=state.stores.get(id);return s?s.name:''};
 const need=it=>Math.max(0,(Number(it.min)||0)-(Number(it.have)||0));
 const tagOf=it=>state.settings.tags.find(t=>t.id===it.tag);
 const tagChip=it=>{const t=tagOf(it);return t?'<span class="tg" style="--c:var(--p'+t.c+')">'+esc(t.name)+'</span>':''};
-function priceAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0) return p;return Number(it.price)>0?Number(it.price):0}
-function cheapest(it){let b=null;for(const sid in (it.prices||{})){if(!state.stores.has(sid)) continue;const p=Number(it.prices[sid]);if(p>0&&(!b||p<b.p)) b={sid,p}}return b}
+function priceAt(it,sid){return pAt(it,sid).lo}
+function cheapest(it){let b=null;const ids=new Set(Object.keys(it.prices||{}));(it.vars||[]).forEach(v=>{if(v&&v.prices) Object.keys(v.prices).forEach(k=>ids.add(k))});for(const sid of ids){if(!state.stores.has(sid)) continue;const p=storeSpec(it,sid);if(p&&(!b||p.lo<b.p)) b={sid,p:p.lo}}return b}
+const avgR=a=>a.length?{lo:a.reduce((s,x)=>s+x.lo,0)/a.length,hi:a.reduce((s,x)=>s+x.hi,0)/a.length}:null;
+function storeSpec(it,sid){
+  const vs=(it.vars||[]).filter(v=>v&&typeof v==='object'&&v.prices&&Number(v.prices[sid])>0);
+  const pk=it.vpick&&it.vpick[sid];if(pk){const v=vs.find(x=>x.n===pk);if(v){const h=Number(v.pricesHi&&v.pricesHi[sid])||0,p=Number(v.prices[sid]);return {lo:p,hi:h>p?h:p}}}
+  const p=it.prices?Number(it.prices[sid]):0;if(p>0){const h=it.pricesHi?Number(it.pricesHi[sid]):0;return {lo:p,hi:h>p?h:p}}
+  if(vs.length){const a=avgR(vs.map(v=>{const p=Number(v.prices[sid]),h=Number(v.pricesHi&&v.pricesHi[sid])||0;return {lo:p,hi:h>p?h:p}}));return {lo:Math.round(a.lo),hi:Math.round(a.hi)}}
+  return null;
+}
+function basePR(it){
+  const lo=Number(it.price)||0,hi=Number(it.pmax)||0;if(lo>0) return {lo,hi:hi>lo?hi:lo};
+  const a=(it.vars||[]).filter(v=>v&&typeof v==='object').map(v=>{if(Number(v.p)>0){const h=Number(v.hi)||0;return {lo:Number(v.p),hi:h>v.p?h:Number(v.p)}}const s=Object.keys(v.prices||{}).filter(k=>Number(v.prices[k])>0).map(k=>{const p=Number(v.prices[k]),h=Number(v.pricesHi&&v.pricesHi[k])||0;return {lo:p,hi:h>p?h:p}});return avgR(s)}).filter(Boolean);
+  const r=avgR(a);return r?{lo:Math.round(r.lo),hi:Math.round(r.hi)}:null;
+}
+function pAt(it,sid){const s=sid?storeSpec(it,sid):null;if(s) return s;const b=basePR(it);return b||{lo:0,hi:0}}
 const mainStore=it=>(it.store&&state.stores.has(it.store))?it.store:((cheapest(it)||{}).sid||'');
 const basePrice=it=>priceAt(it,mainStore(it));
 const vlist=it=>(it&&it.vars||[]).map(v=>typeof v==='string'?{n:v,p:0,hi:0}:v);
@@ -636,7 +653,7 @@ const vspan=v=>{const a=[];if(Number(v.p)>0) a.push([Number(v.p),Math.max(Number
 const entryStore=(e,it)=>{if(e.store&&state.stores.has(e.store)) return e.store;if(!(it.store&&state.stores.has(it.store))){const c=vcheap(vget(it,e.v));if(c) return c.sid}return mainStore(it)};
 const entryUnit=(e,it)=>{const sid=entryStore(e,it),g=vpr(vget(it,e.v)||{},sid);return g?g.lo:priceAt(it,sid)};
 const parsePriceRange=v=>{const m=String(v||'').replace(/\u00a0/g,' ').match(/^\s*([\d\s.,]+?)\s*[-–—]\s*([\d\s.,]+?)\s*$/);if(!m) return null;const a=parseAmount(m[1]),b=parseAmount(m[2]);return isFinite(a)&&isFinite(b)&&a>0&&b>0?{lo:Math.min(a,b),hi:Math.max(a,b)}:null};
-function priceHiAt(it,sid){const p=sid&&it.prices?Number(it.prices[sid]):0;if(p>0){const h=it.pricesHi?Number(it.pricesHi[sid]):0;return h>p?h:p}const lo=Number(it.price)||0,hi=Number(it.pmax)||0;return lo>0?(hi>lo?hi:lo):0}
+function priceHiAt(it,sid){return pAt(it,sid).hi}
 const baseHi=it=>priceHiAt(it,mainStore(it));
 const entryHi=(e,it)=>{const sid=entryStore(e,it),g=vpr(vget(it,e.v)||{},sid);return g?g.hi:priceHiAt(it,sid)};
 const mrange=(lo,hi)=>hi>lo+0.5?nfm(r2(lo))+'–'+money(hi):money(lo);
@@ -833,7 +850,7 @@ function filtered(){
   const out=[...state.items.values()].filter(it=>{
     if(ui.cats.size&&!ui.cats.has(it.cat||'')) return false;
     if(ui.tags.size&&!ui.tags.has(it.tag)) return false;
-    if(ui.stores.size&&![...ui.stores].some(sid=>(it.prices&&sid in it.prices)||it.store===sid)) return false;
+    if(ui.stores.size){const inS=sid=>(it.prices&&sid in it.prices)||it.store===sid||(it.vars||[]).some(v=>v&&v.prices&&Number(v.prices[sid])>0);if(!(ui.storeAll?[...ui.stores].every(inS):[...ui.stores].some(inS))) return false}
     if(ui.only==='low'&&!(need(it)>0&&(Number(it.have)||0)>0)) return false;
     if(ui.only==='none'&&!((Number(it.min)||0)>0&&(Number(it.have)||0)<=0)) return false;
     if(ui.only==='have'&&!(Number(it.have)>0)) return false;
@@ -905,6 +922,7 @@ function viewItems(){
   h+=fold('filters','Ещё фильтры и сортировка',
     '<div class="lbl">Метка</div><div class="chipbar">'+fchip(!ui.tags.size,'f-tag','','Все')+s.tags.map(t=>fchip(ui.tags.has(t.id),'f-tag',t.id,t.name)).join('')+'</div>'
     +'<div class="lbl">Магазин</div><div class="chipbar">'+fchip(!ui.stores.size,'f-store','','Все')+[...state.stores.values()].map(t=>fchip(ui.stores.has(t.id),'f-store',t.id,t.name)).join('')+'</div>'
+    +(ui.stores.size>1?'<div class="lbl">Несколько магазинов</div><div class="chipbar">'+fchip(!ui.storeAll,'f-smode','any','Любой из выбранных')+fchip(ui.storeAll,'f-smode','all','Есть во всех выбранных')+'</div>':'')
     +'<div class="lbl">Запас</div><div class="chipbar">'+fchip(!ui.only,'f-only','','Все')+fchip(ui.only==='low','f-only','low','Нужно докупить')+fchip(ui.only==='none','f-only','none','Нет совсем')+fchip(ui.only==='have','f-only','have','Есть дома')+'</div>'
     +'<div class="lbl">Сортировка</div><div class="chipbar">'+[['name','По названию'],['cat','По категории'],['price','Сначала дешёвые'],['noprice','Сначала без цены'],['sel','Сначала выбранные']].map(x=>fchip(ui.sort===x[0],'f-sort',x[0],x[1])).join('')+'</div>',
     nAct?'выбрано: '+nAct:'');
@@ -917,8 +935,12 @@ function viewItems(){
 }
 function packCost(p){let t=0;(p.items||[]).forEach(x=>{const it=state.items.get(x.id);if(it) t+=(Number(x.q)||1)*basePrice(it)});return r2(t)}
 function viewPacks(){
-  const P=prefs.prices,arr=[...state.packs.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru')),b=budget();
+  const P=prefs.prices,b=budget(),all=[...state.packs.values()],pq=norm(ui.pq||''),ps=prefs.psort||'name';
+  const cnt=p=>(p.items||[]).filter(x=>state.items.get(x.id)).length;
+  const arr=all.filter(p=>!pq||norm(p.name).includes(pq)||(p.items||[]).some(x=>{const it=state.items.get(x.id);return it&&hay(it).includes(pq)})).sort(({name:(a,c)=>a.name.localeCompare(c.name,'ru'),cheap:(a,c)=>packCost(a)-packCost(c)||a.name.localeCompare(c.name,'ru'),exp:(a,c)=>packCost(c)-packCost(a)||a.name.localeCompare(c.name,'ru'),most:(a,c)=>cnt(c)-cnt(a)||a.name.localeCompare(c.name,'ru'),least:(a,c)=>cnt(a)-cnt(c)||a.name.localeCompare(c.name,'ru')})[ps]||((a,c)=>a.name.localeCompare(c.name,'ru')));
   let h='<div class="stack"><div class="actions"><button class="btn primary" type="button" data-act="pack-new">Новый пак</button></div>';
+  if(all.length>1) h+='<section class="card"><input id="pq" class="inp" type="search" placeholder="Поиск по названию пака или товару" value="'+esc(ui.pq||'')+'" autocomplete="off"><div class="field" style="margin-top:8px"><span>Сортировка</span><select id="pk-sort" class="inp">'+[['name','По названию'],['cheap','Сначала дешёвые'],['exp','Сначала дорогие'],['most','Больше товаров'],['least','Меньше товаров']].map(o=>'<option value="'+o[0]+'"'+(ps===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div></section>';
+  if(all.length&&!arr.length) return h+'<section class="card"><div class="empty">Ничего не найдено.</div></section></div>';
   if(!arr.length) return h+'<section class="card"><div class="empty">Паки — это наборы товаров, как плейлисты: «Завтрак», «Уборка», «Поход». Соберите пак один раз и добавляйте в список одним нажатием.</div></section></div>';
   h+=arr.map(p=>{
     const its=(p.items||[]).map(x=>state.items.get(x.id)).filter(Boolean),cost=packCost(p);
@@ -1131,8 +1153,8 @@ const optList=(arr,sel,first)=>(first==null?'':'<option value="">'+first+'</opti
 const sortedStores=()=>[...state.stores.values()].sort((a,b)=>a.name.localeCompare(b.name,'ru'));
 function openItemForm(id,pre){
   const it=id?state.items.get(id):null,s=state.settings,x=Object.assign({},it||{name:'',funny:[],cat:'',tag:'',unit:'шт',have:0,min:0,price:'',store:'',prices:{}},pre||{});
-  fs={kind:'item',id:id||null,funny:(x.funny||[]).slice(),vars:vlist({vars:x.vars}).map(v=>Object.assign({},v))};
-  const sp=sortedStores().map(st=>'<div class="prow"><span>'+esc(st.name)+'</span><input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'"  value="'+esc(x.prices&&x.prices[st.id]>0?(x.pricesHi&&x.pricesHi[st.id]>x.prices[st.id]?x.prices[st.id]+'–'+x.pricesHi[st.id]:x.prices[st.id]):'')+'" autocomplete="off"></div>').join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
+  fs={kind:'item',id:id||null,vpick:Object.assign({},x.vpick||{}),funny:(x.funny||[]).slice(),vars:vlist({vars:x.vars}).map(v=>Object.assign({},v))};
+  const sp=sortedStores().map(st=>{const vv=vlist({vars:x.vars}).filter(v=>v.prices&&Number(v.prices[st.id])>0),pk=vv.find(v=>v.n===(x.vpick||{})[st.id]);return '<div class="prow">'+(vv.length?'<button class="vstore" type="button" data-act="store-vars" data-sid="'+esc(st.id)+'"><b>'+esc(st.name)+' ›</b><span class="s">'+(pk?esc(pk.n)+' · '+money(pk.prices[st.id]):'вариаций: '+vv.length+' · средняя')+'</span></button>':'<span>'+esc(st.name)+'</span>')+'<input class="inp" type="text" inputmode="decimal" data-sp="'+esc(st.id)+'"  value="'+esc(x.prices&&x.prices[st.id]>0?(x.pricesHi&&x.pricesHi[st.id]>x.prices[st.id]?x.prices[st.id]+'–'+x.pricesHi[st.id]:x.prices[st.id]):'')+'" autocomplete="off"></div>'}).join('')||'<p class="s">Магазинов пока нет. Добавьте их в «Ещё → Магазины».</p>';
   const body='<div class="form"><label class="field"><span>Название (нормальное)</span><input id="i-name" class="inp" type="text" value="'+esc(x.name)+'" autocomplete="off" placeholder="Хлеб"></label>'
     +'<div class="field"><span>Альт. названия (впишите вариант и нажмите Enter)</span><div id="i-funny-chips" class="altchips"></div><input id="i-funny-in" class="inp" type="text" autocomplete="off"></div>'
     +'<div class="field"><span>Разновидности</span><div class="vtiles">'+fs.vars.map(v=>{const g=vspan(v),k=Object.keys(v.prices||{}).length;return '<button class="vtile" type="button" data-act="vars-open"><b>'+esc(v.n)+'</b><span class="s">'+(g?mrange(g.lo,g.hi):'без цены')+(k?' · '+k+' '+(k===1?'магазин':'магазина'):'')+'</span></button>'}).join('')+'<button class="vtile vadd" type="button" data-act="vars-open">'+(fs.vars.length?'Изменить':'＋ Добавить')+'</button></div></div>'
@@ -1152,7 +1174,7 @@ function itemFields(){
   const num=v=>{v=String(v).trim();if(!v) return 0;const n=parseAmount(v);return isFinite(n)&&n>=0?n:0};
   const rg=parsePriceRange($('#i-price').value),prices={},pricesHi={};
   document.querySelectorAll('[data-sp]').forEach(i=>{const g=parsePriceRange(i.value),p=g?g.lo:num(i.value);if(p>0){prices[i.dataset.sp]=p;if(g) pricesHi[i.dataset.sp]=g.hi}});
-  return {name:$('#i-name').value,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi};
+  return {name:$('#i-name').value,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi,vpick:fs.vpick};
 }
 function openVarEdit(){
   const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();
@@ -1176,12 +1198,33 @@ function readVarRows(){
     return {n:cap(el.value),p:g?g.lo:0,hi:g&&g.hi>g.lo?g.hi:0,prices,pricesHi,show:[...document.querySelectorAll('[data-vs="'+i+'"]')].map(x=>x.dataset.sid)}});
 }
 function renderVarEdit(focusLast){
-  const nm=cap(fs.pre.name)||'Товар';
-  openSheet('Разновидности: '+esc(nm),'<div class="form"><div id="v-rows">'+fs.rows.map(varRow).join('')+'</div>'
+  const nm=cap(fs.pre.name)||'Товар',sc=!$('#modal').hidden?$('#sheet-b').scrollTop:0,big=fs.rows.length>4;
+  openSheet('Разновидности: '+esc(nm),'<div class="form">'+(big?'<div class="vtools"><input id="v-q" class="inp" type="search" placeholder="Поиск" value="'+esc(fs.vq||'')+'" autocomplete="off"><select id="v-sort" class="inp"><option value="">Сортировка…</option>'+VSORT.filter(o=>o[0]!=='add').map(o=>'<option value="'+o[0]+'">'+o[1]+'</option>').join('')+'</select></div>':'')+'<div id="v-rows">'+fs.rows.map(varRow).join('')+'</div>'
     +'<div class="actions"><button class="btn" type="button" data-act="vrow-add">＋ Ещё разновидность</button></div><p class="s">Цены можно диапазоном. Не указана цена в магазине — берётся обычная, нет и её — цена товара.</p></div>',
     '<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="vars-cancel">Назад</button><button class="btn primary" type="button" data-act="vars-ok" data-primary="1">Готово</button></div>');
-  if(focusLast) setTimeout(()=>{const a=document.querySelectorAll('[data-vn]');if(a.length) a[a.length-1].focus()},170);
+  $('#sheet-b').scrollTop=focusLast?1e6:sc;applyVq();
+  if(focusLast) setTimeout(()=>{const a=document.querySelectorAll('[data-vn]');if(a.length){a[a.length-1].focus({preventScroll:false})}},170);
 }
+function openStoreVars(sid){
+  const pend=$('#i-funny-in');if(pend&&pend.value.trim()) addFunny();
+  const pre=itemFields();pre.vars=fs.vars;fs={kind:'storevars',id:fs.id,pre,sid,vpick:Object.assign({},pre.vpick)};renderStoreVars();
+}
+function renderStoreVars(){
+  const sid=fs.sid,vs=vlist({vars:fs.pre.vars}).filter(v=>v.prices&&Number(v.prices[sid])>0),pk=fs.vpick[sid]||'';
+  const av=avgR(vs.map(v=>({lo:Number(v.prices[sid]),hi:Math.max(Number(v.pricesHi&&v.pricesHi[sid])||0,Number(v.prices[sid]))})));
+  const sc=!$('#modal').hidden?$('#sheet-b').scrollTop:0;
+  openSheet(esc(storeName(sid))+': '+esc(cap(fs.pre.name)||'Товар'),'<div class="form"><p class="s">Какая цена показывается для этого магазина. Не выбрано — средняя по вариациям.</p>'
+    +'<div class="vlist"><button class="vopt'+(pk?'':' on')+'" type="button" data-act="sv-pick" data-n=""><b>Средняя</b><span>'+(av?mrange(Math.round(av.lo),Math.round(av.hi)):'—')+'</span></button>'
+    +vs.map(v=>{const p=Number(v.prices[sid]),h=Number(v.pricesHi&&v.pricesHi[sid])||0;return '<button class="vopt'+(pk===v.n?' on':'')+'" type="button" data-act="sv-pick" data-n="'+esc(v.n)+'"><b>'+esc(v.n)+'</b><span>'+mrange(p,h)+'</span></button>'}).join('')+'</div></div>',
+    '<div class="actions"><span class="grow"></span><button class="btn" type="button" data-act="sv-cancel">Назад</button><button class="btn primary" type="button" data-act="sv-ok" data-primary="1">Готово</button></div>');
+  $('#sheet-b').scrollTop=sc;
+}
+function svBack(keep){const id=fs.id,pre=Object.assign({},fs.pre);if(keep) pre.vpick=fs.vpick;openItemForm(id,pre)}
+function vSortKey(v,mode){const sp=vspan(v);if(mode==='az') return cap(v.n).toLowerCase();if(mode==='cheap') return sp?sp.lo:1e12;if(mode==='exp') return sp?-sp.hi:1e12;if(mode==='store'){const c=vcheap(v);return c?storeName(c.sid).toLowerCase():'я'}return 0}
+function vOrder(arr,mode){const idx=arr.map((v,i)=>i);if(!mode||mode==='add') return idx;return idx.sort((a,b)=>{const x=vSortKey(arr[a],mode),y=vSortKey(arr[b],mode);return (typeof x==='string'?x.localeCompare(y,'ru'):x-y)||cap(arr[a].n).localeCompare(cap(arr[b].n),'ru')})}
+const VSORT=[['add','Как добавлено'],['az','По алфавиту'],['cheap','Сначала дешёвые'],['exp','Сначала дорогие'],['store','По магазину']];
+function applyVSort(mode){readVarRows();const o=vOrder(fs.rows,mode);fs.rows=o.map(i=>fs.rows[i]);renderVarEdit()}
+function applyVq(){const q=norm((fs&&fs.vq)||'');document.querySelectorAll('#v-rows .vcard').forEach(c=>{const n=norm((c.querySelector('[data-vn]')||{}).value||'');c.hidden=!!q&&!n.includes(q)});document.querySelectorAll('#vp-chips .fchip').forEach(c=>{c.hidden=!!q&&!norm(c.textContent).includes(q)})}
 function varsBack(keep){
   readVarRows();const seen=new Set(),vars=keep?fs.rows.map(v=>{const o=Object.assign({},v);delete o.show;return o}).filter(v=>v.n&&!seen.has(v.n.toLowerCase())&&seen.add(v.n.toLowerCase())):fs.pre.vars;
   const id=fs.id,pre=Object.assign({},fs.pre,{vars});openItemForm(id,pre);
@@ -1190,8 +1233,10 @@ function askVariant(id){const it=state.items.get(id);if(!it) return;fs={kind:'va
 function renderVarPick(){
   const it=state.items.get(fs.id);if(!it) return closeSheet();
   const inL=new Set(entries().filter(e=>e.itemId===it.id&&!e.done).map(e=>e.v||''));
-  openSheet(esc(dn(it)),'<div class="form"><p class="s">Какой нужен? Можно выбрать несколько.</p><div class="chipbar" style="flex-wrap:wrap">'+vlist(it).map((v,i)=>fchip(fs.sel.indexOf(i)>=0,'var-tgl',String(i),v.n+(vspan(v)?' · '+mrange(vspan(v).lo,vspan(v).hi):'')+(inL.has(v.n)?' ✓':''))).join('')+'</div></div>',
+  const vl=vlist(it),sc=!$('#modal').hidden?$('#sheet-b').scrollTop:0,big=vl.length>6,mode=ui.vsort||'add';
+  openSheet(esc(dn(it)),'<div class="form"><p class="s">Какой нужен? Можно выбрать несколько.</p>'+(big?'<div class="vtools"><input id="v-q" class="inp" type="search" placeholder="Поиск" value="'+esc(fs.vq||'')+'" autocomplete="off"><select id="vp-sort" class="inp">'+VSORT.map(o=>'<option value="'+o[0]+'"'+(mode===o[0]?' selected':'')+'>'+o[1]+'</option>').join('')+'</select></div>':'')+'<div id="vp-chips" class="chipbar" style="flex-wrap:wrap">'+vOrder(vl,mode).map(i=>{const v=vl[i];return fchip(fs.sel.indexOf(i)>=0,'var-tgl',String(i),v.n+(vspan(v)?' · '+mrange(vspan(v).lo,vspan(v).hi):'')+(inL.has(v.n)?' ✓':''))}).join('')+'</div></div>',
     '<div class="actions"><button class="btn" type="button" data-act="var-any">Неважно</button><span class="grow"></span><button class="btn" type="button" data-act="close">Отмена</button><button class="btn primary" type="button" data-act="var-ok" data-primary="1"'+(fs.sel.length?'':' disabled')+'>Добавить</button></div>');
+  $('#sheet-b').scrollTop=sc;applyVq();
 }
 function addFunny(){
   const el=$('#i-funny-in');if(!el||!fs||!fs.funny) return;const v=cap(el.value);el.value='';if(!v) return;
@@ -1207,7 +1252,7 @@ function saveItem(){
   const rg=parsePriceRange($('#i-price').value);
   const prices={},pricesHi={};document.querySelectorAll('[data-sp]').forEach(i=>{const g=parsePriceRange(i.value),p=g?g.lo:num(i.value);if(p>0){prices[i.dataset.sp]=p;if(g) pricesHi[i.dataset.sp]=g.hi}});
   if(old&&old.prices) for(const k in old.prices) if(!state.stores.has(k)){prices[k]=old.prices[k];if(old.pricesHi&&old.pricesHi[k]) pricesHi[k]=old.pricesHi[k]}
-  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi,vars:fs.vars.filter(v=>v.n)});
+  const o=Object.assign({},old||{},{id:old?old.id:uid(),name,funny:fs.funny.slice(),cat:$('#i-cat').value,tag:$('#i-tag').value,unit:$('#i-unit').value,have:num($('#i-have').value),min:num($('#i-min').value),price:(rg?rg.lo:num($('#i-price').value))||'',pmax:rg?rg.hi:'',store:$('#i-store').value,prices,pricesHi,vpick:fs.vpick,vars:fs.vars.filter(v=>v.n)});
   closeSheet();commit(old?'Товар изменён':'Товар добавлен',()=>Persist.put('items',o));
 }
 function kassaBox(tot){
@@ -1562,6 +1607,8 @@ const act={
   'got-first'(){ui.gotFirst=!ui.gotFirst;render(true)},
   'list-clear'(el){if(!entries().length) return;twoStep(el,'Точно очистить?',()=>{const all=entries();commit('Список очищен',()=>all.forEach(e=>Persist.del('list',e.id)),{quiet:true});ui.lsel.clear();render(true)})},
   'vars-open'(){openVarEdit()},
+  'store-vars'(el){openStoreVars(el.dataset.sid)},
+  'sv-pick'(el){const n=el.dataset.n;if(n) fs.vpick[fs.sid]=n;else delete fs.vpick[fs.sid];renderStoreVars()},'sv-ok'(){svBack(true)},'sv-cancel'(){svBack(false)},
   'vs-rm'(el){readVarRows();const r=fs.rows[Number(el.dataset.i)],s=el.dataset.sid;if(r){delete r.prices[s];delete r.pricesHi[s];r.show=(r.show||[]).filter(x=>x!==s)}renderVarEdit()},
   'vars-ok'(){varsBack(true)},'vars-cancel'(){varsBack(false)},
   'vrow-add'(){readVarRows();fs.rows.push({n:'',p:0,hi:0});renderVarEdit(true)},
@@ -1695,7 +1742,7 @@ const act={
     prefs.pf='';savePrefs();render(true)})},
   'bulk-del'(el){twoStep(el,'Точно удалить?',()=>{const ids=[...ui.sel];commit('Удалено товаров: '+ids.length,()=>ids.forEach(id=>{[...state.list.values()].forEach(e=>{if(e.itemId===id) Persist.del('list',e.id)});Persist.del('items',id)}));ui.sel.clear();ui.selMode=false;render(true)})},
   'f-cat'(el){tgl(ui.cats,el.dataset.v);ui.limit=100;render(true)},'f-tag'(el){tgl(ui.tags,el.dataset.v);ui.limit=100;render(true)},
-  'f-store'(el){tgl(ui.stores,el.dataset.v);ui.limit=100;render(true)},'f-only'(el){ui.only=el.dataset.v;ui.limit=100;render(true)},
+  'f-smode'(el){ui.storeAll=el.dataset.v==='all';ui.limit=100;render(true)},'f-store'(el){tgl(ui.stores,el.dataset.v);ui.limit=100;render(true)},'f-only'(el){ui.only=el.dataset.v;ui.limit=100;render(true)},
   'f-sort'(el){ui.sort=el.dataset.v;render(true)},
   'est-toggle'(el){const it=state.items.get(el.dataset.id);if(!it) return;commit(it.noEst?'Товар снова учитывается':'Товар не учитывается в оценке',()=>Persist.put('items',Object.assign({},it,{noEst:!it.noEst})),{quiet:true})},
   cut(el){const id=el.dataset.id;commit('Убрано из списка',()=>Persist.del('list',id))},
@@ -1765,11 +1812,16 @@ document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if
 document.addEventListener('input',e=>{
   const t=e.target;
   if(t.id==='q-add'){qsRender();return}
+  if(t.id==='pq'){ui.pq=t.value;render(true);const q=$('#pq');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}return}
+  if(t.id==='v-q'){if(fs)fs.vq=t.value;applyVq();return}
   if(t.id==='q'){const was=!!ui.q;ui.q=t.value;ui.limit=100;if(prefs.iview==='blocks'&&(was!==!!ui.q)){render(true);const q=$('#q');if(q){q.focus();q.setSelectionRange(q.value.length,q.value.length)}}else refreshCatalog()}
 });
 document.addEventListener('change',e=>{
   const el=e.target;
   if(el.dataset&&el.dataset.vsadd!=null){if(el.value){readVarRows();const r=fs.rows[Number(el.dataset.vsadd)];if(r) r.show=(r.show||[]).concat(el.value);renderVarEdit()}return}
+  if(el.id==='pk-sort'){prefs.psort=el.value;savePrefs();render(true);return}
+  if(el.id==='v-sort'){applyVSort(el.value);return}
+  if(el.id==='vp-sort'){ui.vsort=el.value;renderVarPick();return}
   if(el.id==='b-cols'){prefs.bcols=el.value;savePrefs();render(true);return}
   if(el.id==='b-sort'){prefs.bsort=el.value;savePrefs();render(true);return}
   if(el.id==='b-hide'){prefs.bhide=el.checked;savePrefs();render(true);return}
